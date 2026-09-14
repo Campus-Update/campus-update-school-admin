@@ -28,7 +28,7 @@ jobs:
           if find . \( -name '*.sln' -o -name '*.csproj' \) -print -quit | grep -q .; then echo "dotnet=true" >> "$GITHUB_OUTPUT"; fi
           if find . -name pubspec.yaml -print -quit | grep -q .; then echo "flutter=true" >> "$GITHUB_OUTPUT"; fi
       - name: Check whitespace errors
-        run: git show --check --oneline --pretty=format: HEAD
+        run: 'git show --check --oneline --pretty=format: HEAD'
       - name: Set up Node.js
         if: steps.project.outputs.node == 'true'
         uses: actions/setup-node@v4
