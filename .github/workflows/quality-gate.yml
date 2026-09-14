@@ -1,0 +1,73 @@
+name: Quality Gate
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Formatting and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Detect project type
+        id: project
+        shell: bash
+        run: |
+          if find . -name package.json -not -path './node_modules/*' -print -quit | grep -q .; then echo "node=true" >> "$GITHUB_OUTPUT"; fi
+          if find . \( -name '*.sln' -o -name '*.csproj' \) -print -quit | grep -q .; then echo "dotnet=true" >> "$GITHUB_OUTPUT"; fi
+          if find . -name pubspec.yaml -print -quit | grep -q .; then echo "flutter=true" >> "$GITHUB_OUTPUT"; fi
+      - name: Check whitespace errors
+        run: git diff --check HEAD^
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+      - name: Set up Node.js
+        if: steps.project.outputs.node == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install Node.js dependencies
+        if: steps.project.outputs.node == 'true'
+        run: npm ci
+      - name: Check Node.js formatting and linting
+        if: steps.project.outputs.node == 'true'
+        run: npm run format:check --if-present && npm run lint --if-present
+      - name: Build Node.js project
+        if: steps.project.outputs.node == 'true'
+        run: npm run build --if-present
+      - name: Set up .NET
+        if: steps.project.outputs.dotnet == 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore .NET dependencies
+        if: steps.project.outputs.dotnet == 'true'
+        run: dotnet restore
+      - name: Check .NET formatting
+        if: steps.project.outputs.dotnet == 'true'
+        run: dotnet format --verify-no-changes --no-restore
+      - name: Build .NET project
+        if: steps.project.outputs.dotnet == 'true'
+        run: dotnet build --configuration Release --no-restore
+      - name: Set up Flutter
+        if: steps.project.outputs.flutter == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Check Flutter project
+        if: steps.project.outputs.flutter == 'true'
+        run: flutter pub get && dart format --output=none --set-exit-if-changed . && flutter analyze
+      - name: Confirm repository readiness
+        if: steps.project.outputs.node != 'true' && steps.project.outputs.dotnet != 'true' && steps.project.outputs.flutter != 'true'
+        run: echo "No supported project manifest exists yet; repository hygiene checks passed."
