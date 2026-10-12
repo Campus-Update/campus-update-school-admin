@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* 1500px content column at the 1728px design width (114px side margins) */
+  .container-page {
+    @apply mx-auto w-full max-w-[1548px] px-6;
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-white font-sans text-brand-ink antialiased;
+  }
+}
