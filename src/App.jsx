@@ -1,8 +1,24 @@
 import { useEffect, useState } from 'react'
 import OverviewPage from './components/school/OverviewPage.jsx'
-import PlaceholderPage from './components/school/PlaceholderPage.jsx'
+import ModulePage from './components/school/ModulePage.jsx'
+import { DataProvider } from './campus-update/context/DataContext.jsx'
+import NewsPage from './campus-update/pages/News.jsx'
+import EventsPage from './campus-update/pages/Events.jsx'
+import CalendarPage from './campus-update/pages/Calendar.jsx'
+import UsersPage from './campus-update/pages/Users.jsx'
+import StatisticsPage from './campus-update/pages/Statistics.jsx'
+import SettingsPage from './campus-update/pages/Settings.jsx'
 
 const PAGES = ['news', 'events', 'calendar', 'users', 'stats', 'settings']
+
+const PAGE_COMPONENTS = {
+  news: NewsPage,
+  events: EventsPage,
+  calendar: CalendarPage,
+  users: UsersPage,
+  stats: StatisticsPage,
+  settings: SettingsPage,
+}
 
 const TITLES = {
   news: ['News Announcements', 'Publish official announcements, research updates, and campus stories.'],
@@ -18,7 +34,7 @@ const fromHash = () => {
   return PAGES.includes(h) ? h : 'overview'
 }
 
-export default function App() {
+function SchoolAdminApp() {
   const [route, setRoute] = useState(fromHash)
 
   useEffect(() => {
@@ -33,5 +49,18 @@ export default function App() {
 
   if (route === 'overview') return <OverviewPage onNavigate={navigate} />
   const [title, subtitle] = TITLES[route]
-  return <PlaceholderPage active={route} title={title} subtitle={subtitle} onNavigate={navigate} note={route === 'news' ? 'This screen is under construction by the News module owner.' : 'This screen is coming soon.'} />
+  const Page = PAGE_COMPONENTS[route]
+  return (
+    <ModulePage active={route} title={title} subtitle={subtitle} onNavigate={navigate}>
+      <Page />
+    </ModulePage>
+  )
+}
+
+export default function App() {
+  return (
+    <DataProvider>
+      <SchoolAdminApp />
+    </DataProvider>
+  )
 }
