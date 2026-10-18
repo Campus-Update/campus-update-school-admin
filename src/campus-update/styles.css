@@ -286,3 +286,48 @@
   .source-page .notif { right: -60px; width: min(300px, calc(100vw - 32px)); }
 }
 @media (prefers-reduced-motion: reduce) { .source-page * { transition: none !important; animation: none !important; } }
+
+/* Give the module pages more room to breathe inside the school-admin shell. */
+.source-page { width: 100%; min-width: 0; }
+.source-page .panel { padding: 28px; }
+.source-page .toolbar { align-items: center; gap: 16px 20px; margin-bottom: 24px; }
+.source-page .note { padding: 10px 14px; font-size: 13px; line-height: 1.45; }
+.source-page .left-tools { align-items: center; gap: 12px; }
+.source-page .search, .source-page .filter-btn, .source-page .btn { min-height: 40px; }
+.source-page .search { padding: 0 16px; }
+.source-page .filter-btn { padding: 0 16px; }
+.source-page .tcard { border-radius: 14px; }
+.source-page th { height: 40px; padding: 0 16px; }
+.source-page th:first-child, .source-page td:first-child { padding-left: 20px; }
+.source-page td { height: 64px; padding: 10px 16px; }
+.source-page .cell-sub { margin-top: 4px; }
+.source-page .pager { min-height: 48px; margin-top: 18px; padding: 10px 20px; }
+.source-page .stats4 { gap: 18px; margin-bottom: 22px; }
+.source-page .stat { min-height: 138px; padding: 24px; }
+.source-page .box { padding: 20px; }
+.source-page .set-wrap { gap: 24px; padding-top: 24px; }
+.source-page .set-tabs { gap: 8px; }
+.source-page .set-tabs button { height: 40px; padding: 0 14px; }
+.source-page .set-card { padding: 28px; }
+.source-page .grid2 { gap: 20px; }
+.source-page .fld label { margin-bottom: 8px; }
+.source-page .inp { min-height: 40px; padding: 0 12px; }
+.source-page .inp select { height: 38px; }
+.source-page .inp.area { padding: 10px 12px; }
+.source-page .inp textarea { min-height: 100px; }
+.source-page .photo { margin: 24px 0 22px; }
+.source-page .actions { margin-top: 28px; padding-top: 22px; }
+.source-page .row-sw { padding: 18px 0; }
+
+@media (max-width: 900px) {
+  .source-page .panel { padding: 22px; }
+}
+
+@media (max-width: 560px) {
+  .source-page .panel { padding: 16px; }
+  .source-page .set-wrap { padding-top: 16px; }
+  .source-page .set-card { padding: 20px; }
+  .source-page .grid2 { gap: 16px; }
+  .source-page .stats4 { gap: 14px; }
+  .source-page .stat { min-height: 0; padding: 20px; }
+}
