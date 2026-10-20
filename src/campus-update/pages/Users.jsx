@@ -40,7 +40,7 @@ export default function Users() {
     <div>
       <div className="toolbar">
         <div className="note"><span><b>Publishing rights are scoped.</b> A department administrator can only reach their own department. Nobody at a school can publish to another institution.</span></div>
-        <div className="note"><span><b>Administrator management is not on the API yet for school admins.</b> Changes here save on this device only.</span></div>
+        <div className="note"><span><b>Administrators are provisioned by the Campus Update platform team.</b> Contract §11 makes admin creation and listing SuperAdmin-only, so this list stays on this device by design.</span></div>
         {add}
       </div>
       <DataTable caption="Administrators" columns={columns} rows={admins.rows} empty={<EmptyState title="No administrators" text="Add someone who can publish on behalf of your institution." action={add} />} />

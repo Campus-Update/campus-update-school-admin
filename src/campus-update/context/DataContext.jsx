@@ -3,7 +3,7 @@ import { usePersistentState } from '../lib/storage.js';
 import { nextId } from '../lib/format.js';
 import {
   DEFAULT_INSTITUTION, DEFAULT_PREFS, DEFAULT_PROFILE,
-  makeAdmins, makeAlerts, makeCalendar,
+  makeAdmins, makeAlerts,
 } from '../data/seed.js';
 import { authApi, calendarApi, contentApi, schoolsApi } from '../../lib/api.js';
 
@@ -81,6 +81,7 @@ export function DataProvider({ children }) {
   const [institution, setInstitution] = usePersistentState('institution', DEFAULT_INSTITUTION);
   const [prefs, setPrefsState] = usePersistentState('prefs', DEFAULT_PREFS);
 
+  const acadRef = useRef({});
   const [toastMsg, setToastMsg] = useState('');
   const timer = useRef();
   const toast = useCallback((msg) => {
@@ -114,9 +115,15 @@ export function DataProvider({ children }) {
           })),
         ),
       )
-      .catch(() => {
-        setCalendarRows(makeCalendar());
-        setCalendarError(true);
+      .catch((e) => {
+        // Contract §10: 404 means no calendar yet (clean empty state); any other status is a server fault.
+        if (e && e.status === 404) {
+          setCalendarRows([]);
+          setCalendarError(false);
+        } else {
+          setCalendarRows([]);
+          setCalendarError(true);
+        }
       });
     authApi
       .profile()
@@ -127,6 +134,17 @@ export function DataProvider({ children }) {
           last: p.lastName || prev.last,
           email: p.email || prev.email,
           role: ROLE_LABEL[p.role] || prev.role,
+        }));
+        acadRef.current = {
+          institutionId: p.institutionId,
+          eventsEnabled: p.eventsEnabled,
+          advertisementsEnabled: p.advertisementsEnabled,
+        };
+        setPrefsState((prev) => ({
+          push: p.pushNotificationsEnabled ?? prev.push,
+          email: p.newsEnabled ?? prev.email,
+          urgent: p.announcementsEnabled ?? prev.urgent,
+          digest: p.allCampusFeed ?? prev.digest,
         }));
         if (p.institutionId) {
           schoolsApi
@@ -153,17 +171,19 @@ export function DataProvider({ children }) {
   const setPrefs = useCallback(
     (f) => {
       setPrefsState(f);
+      const base = acadRef.current;
+      if (!base.institutionId) return;
       authApi
         .updateAcademicSettings({
-          institutionId: null,
+          institutionId: base.institutionId,
           facultyId: null,
           departmentId: null,
           programmeId: null,
           academicLevelId: null,
-          newsEnabled: true,
-          announcementsEnabled: true,
-          eventsEnabled: true,
-          advertisementsEnabled: true,
+          newsEnabled: !!f.email,
+          announcementsEnabled: !!f.urgent,
+          eventsEnabled: base.eventsEnabled ?? true,
+          advertisementsEnabled: base.advertisementsEnabled ?? true,
           pushNotificationsEnabled: !!f.push,
           allCampusFeed: !!f.digest,
         })
@@ -218,14 +238,14 @@ export function DataProvider({ children }) {
         const row = { ...r, id: r.id || `cal-${Date.now()}` };
         setCalendarRows((c) => [row, ...c]);
         return calendarApi
-          .create({ institutionId: null, title: r.title, academicSession: r.category || 'General', imageUrl: '', publishedAt: new Date(`${r.date}T08:00:00Z`).toISOString(), isOfficial: true })
+          .create({ institutionId: null, title: r.title, academicSession: r.category || 'General', imageUrl: 'https://campus-update.example/calendars/placeholder.png', publishedAt: new Date(`${r.date}T08:00:00Z`).toISOString(), isOfficial: true })
           .catch(() => toast('Calendar API unavailable — saved on this device only.'));
       },
       update: (id, patch) => {
         setCalendarRows((c) => c.map((x) => (x.id === id ? { ...x, ...patch } : x)));
         const row = calendarRows.find((x) => x.id === id);
         if (row && String(row.id).length > 12) {
-          return calendarApi.update(id, { institutionId: null, title: (patch.title ?? row.title), academicSession: (patch.category ?? row.category) || 'General', imageUrl: '', publishedAt: new Date(`${patch.date ?? row.date}T08:00:00Z`).toISOString(), isOfficial: true }).catch(() => toast('Calendar API unavailable — saved on this device only.'));
+          return calendarApi.update(id, { institutionId: null, title: (patch.title ?? row.title), academicSession: (patch.category ?? row.category) || 'General', imageUrl: 'https://campus-update.example/calendars/placeholder.png', publishedAt: new Date(`${patch.date ?? row.date}T08:00:00Z`).toISOString(), isOfficial: true }).catch(() => toast('Calendar API unavailable — saved on this device only.'));
         }
         return Promise.resolve();
       },

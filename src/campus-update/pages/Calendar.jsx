@@ -38,7 +38,7 @@ export default function Calendar() {
     <div>
       <div className="toolbar">
         <div className="note"><span><b>Calendar dates are institutional.</b> Only administrators at {institution.name} can add or change these. Students can read them but never edit.</span></div>
-        {calendar.error && <div className="note"><span><b>Calendar endpoint is unreachable on staging (server error).</b> Showing sample dates stored on this device until backend fixes it.</span></div>}
+        {calendar.error && <div className="note"><span><b>Calendar service is returning server errors on staging (contract §10 says 200/404).</b> Dates you add are kept on this device until the endpoint recovers; reported to backend with traceIds.</span></div>}
         {add}
       </div>
       <DataTable caption="Academic calendar" columns={columns} rows={rows} empty={<EmptyState title="No dates yet" text="Add the first date for this academic session." action={add} />} />
