@@ -6,6 +6,10 @@ export function StatusPill({ status }) {
     return <span className="pill draft"><Icon n="pencil" s={15} w={1.4} />Draft</span>;
   if (status === 'Scheduled')
     return <span className="pill sched"><Icon n="clock" s={15} w={1.4} />Scheduled</span>;
+  if (status === 'Pending')
+    return <span className="pill sched"><Icon n="clock" s={15} w={1.4} />Pending approval</span>;
+  if (status === 'Rejected')
+    return <span className="pill warn"><i />Rejected</span>;
   if (status === 'Suspended')
     return <span className="pill warn"><i />Suspended</span>;
   return <span className="pill ok"><i />{status}</span>;

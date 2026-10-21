@@ -40,11 +40,16 @@ export default function News() {
   const filtered = q || status !== 'All' || type !== 'All';
   const clear = () => { setQ(''); setStatus('All'); setType('All'); };
 
+  // Contract §4: school admins submit Draft→PendingApproval; publishing is SuperAdmin; unpublish = archive.
   const toggleLive = (r) => {
     const now = new Date().toISOString();
-    if (r.status === 'Live') content.update(r.id, { status: 'Draft', updatedAt: now });
-    else content.update(r.id, { status: 'Live', updatedAt: now, publishedAt: r.publishedAt || now, scheduledFor: null });
-    toast(r.status === 'Live' ? 'Moved to drafts' : 'Published');
+    if (r.status === 'Live') {
+      content.remove(r.id);
+      toast('Unpublished (archived)');
+    } else {
+      content.update(r.id, { status: 'Pending', updatedAt: now });
+      toast('Submitted for approval');
+    }
   };
 
   const columns = [
@@ -59,7 +64,7 @@ export default function News() {
       render: (r) => (
         <RowMenu label={r.title} items={[
           { label: 'Edit', run: () => setModal({ item: r }) },
-          { label: r.status === 'Live' ? 'Unpublish' : 'Publish now', run: () => toggleLive(r) },
+          { label: r.status === 'Live' ? 'Unpublish' : 'Submit for approval', run: () => toggleLive(r) },
           { label: 'Delete', danger: true, run: () => setDel(r) },
         ]} />
       ),
@@ -70,6 +75,7 @@ export default function News() {
 
   return (
     <div>
+      <div className="note"><span><b>The list API returns published items only (contract §8).</b> Drafts and pending items are safe on the server but hidden here after a reload until backend includes own unpublished items in the list.</span></div>
       <div className="toolbar" style={{ alignItems: 'center' }}>
         <div className="left-tools" ref={tools}>
           <label className="search">

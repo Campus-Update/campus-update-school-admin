@@ -10,8 +10,9 @@ import { authApi, calendarApi, contentApi, schoolsApi } from '../../lib/api.js';
 const Ctx = createContext(null);
 export const useData = () => useContext(Ctx);
 
-const STATUS_TO_API = { Live: 'Published', Draft: 'Draft', Scheduled: 'Scheduled' };
-const STATUS_FROM_API = (s) => (s === 'Published' ? 'Live' : s);
+const STATUS_TO_API = { Live: 'Published', Draft: 'Draft', Scheduled: 'Draft', Pending: 'PendingApproval', Rejected: 'Rejected' };
+// Contract §4: Published→Live, PendingApproval→Pending; Archived rows are hidden (delete = archive).
+const STATUS_FROM_API = (s) => (s === 'Published' ? 'Live' : s === 'PendingApproval' ? 'Pending' : s);
 
 const fromApi = (it) => ({
   id: it.id,
@@ -34,7 +35,7 @@ const fromApi = (it) => ({
   saved: it.views || 0,
 });
 
-const toApi = (r, withType) => {
+const toApi = (r, withType, institutionId) => {
   const body = {
     title: r.title,
     body: r.body || r.title,
@@ -49,7 +50,10 @@ const toApi = (r, withType) => {
     registrationUrl: null,
     sponsorName: null,
     targetUrl: null,
-    audiences: [],
+    // Contract §9: audiences needs at least one entry; school admins always target their own institution.
+    audiences: institutionId
+      ? [{ institutionId, facultyId: null, departmentId: null, programmeId: null, academicLevelId: null }]
+      : [],
   };
   if (withType) body.type = r.type || 'News';
   return body;
@@ -194,11 +198,11 @@ export function DataProvider({ children }) {
 
   const content = useMemo(
     () => ({
-      rows: items.filter((r) => r.type !== 'Advertisement'),
+      rows: items.filter((r) => r.type !== 'Advertisement' && r.status !== 'Archived'),
       error: contentError,
       add: (r) =>
         contentApi
-          .create(toApi({ ...r, type: r.type || 'News' }, true))
+          .create(toApi({ ...r, type: r.type || 'News' }, true, acadRef.current.institutionId))
           .then((created) => setItems((c) => [fromApi(created), ...c]))
           .catch((e) => toast(`Could not save: ${e.message}`)),
       update: (id, patch) => {
@@ -206,9 +210,12 @@ export function DataProvider({ children }) {
         const next = { ...prev, ...patch };
         setItems((c) => c.map((x) => (x.id === id ? next : x)));
         return contentApi
-          .update(id, toApi(next, false))
+          .update(id, toApi(next, false, acadRef.current.institutionId))
           .then(() => (patch.status && patch.status !== prev?.status ? contentApi.setStatus(id, STATUS_TO_API[patch.status] || patch.status) : null))
-          .catch((e) => toast(`Save failed: ${e.message}`));
+          .catch((e) => {
+            toast(`Save failed: ${e.message}`);
+            loadContent(); // revert optimistic row to server truth
+          });
       },
       remove: (id) =>
         contentApi
