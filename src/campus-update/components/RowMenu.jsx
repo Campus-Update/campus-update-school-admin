@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Dots } from './Icons.jsx';
+import { Dots, Icon } from './Icons.jsx';
 
 export default function RowMenu({ label, items }) {
   const [open, setOpen] = useState(false);
@@ -37,9 +37,10 @@ export default function RowMenu({ label, items }) {
               type="button"
               role="menuitem"
               disabled={it.disabled}
-              className={it.danger ? 'danger' : ''}
+              className={`rowmenu-item${it.danger ? ' danger' : ''}${it.variant ? ` ${it.variant}` : ''}${it.dividerAfter ? ' divider-after' : ''}`}
               onClick={() => { setOpen(false); btn.current?.focus(); it.run?.(); }}
             >
+              {it.icon && <Icon n={it.icon} s={20} w={1.7} />}
               {it.label}
             </button>
           ))}

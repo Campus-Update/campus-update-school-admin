@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FormModal } from './Modal.jsx';
+import { FormModal, Modal } from './Modal.jsx';
 import { AreaField, CheckField, SelectField, StatusField, TextField } from './Fields.jsx';
 import { AUDIENCES, CATEGORIES, CONTENT_TYPES, PRIORITIES, ROLES } from '../data/metrics.js';
 import { isEmail } from '../lib/format.js';
@@ -113,31 +113,84 @@ export function CalendarModal({ item, onClose, onSave }) {
 }
 
 /* ---------- Administrators ---------- */
-export function AdminModal({ item, existing, onClose, onSave }) {
+export function AdminModal({ item, existing, institutionName, onClose, onSave }) {
   const editing = !!item;
+  const [firstName = '', ...lastNameParts] = (item?.name || '').split(/\s+/);
   const { v, set, errors, submit } = useFormState(
-    item || { name: '', email: '', role: ROLES[2], scope: '', status: 'Active', lastActive: null },
+    item ? {
+      firstName,
+      lastName: lastNameParts.join(' '),
+      email: item.email,
+      role: item.role,
+      scope: item.scope,
+      status: item.status,
+      lastActive: item.lastActive,
+    } : { firstName: '', lastName: '', email: '', role: '', scope: '', status: 'Active', lastActive: null },
     (s) => clean({
-      name: s.name.trim().length < 2 ? 'Enter the administrator’s name.' : undefined,
+      firstName: s.firstName.trim().length < 1 ? 'Enter the administrator’s first name.' : undefined,
+      lastName: s.lastName.trim().length < 1 ? 'Enter the administrator’s last name.' : undefined,
       email: !isEmail(s.email.trim())
         ? 'Enter a valid email address.'
         : existing.some((a) => a.id !== item?.id && a.email.toLowerCase() === s.email.trim().toLowerCase())
           ? 'An administrator with this email already exists.'
           : undefined,
-      scope: !s.scope.trim() ? 'Describe what this administrator can publish.' : undefined,
+      role: !s.role ? 'Select an administrator role.' : undefined,
     }),
-    (s) => onSave({ ...s, name: s.name.trim(), email: s.email.trim(), scope: s.scope.trim() }),
+    (s) => onSave({
+      name: `${s.firstName.trim()} ${s.lastName.trim()}`,
+      email: s.email.trim(),
+      role: s.role,
+      scope: s.scope.trim(),
+      status: s.status,
+      lastActive: s.lastActive,
+    }),
   );
   return (
-    <FormModal title={editing ? 'Edit administrator' : 'Add new administrator'} onClose={onClose} onSubmit={submit} submitLabel={editing ? 'Save changes' : 'Add administrator'}>
-      <div className="grid2">
-        <TextField label="Name" full value={v.name} onChange={(x) => set({ name: x })} error={errors.name} />
-        <TextField label="Email address" type="email" full value={v.email} onChange={(x) => set({ email: x })} error={errors.email} autoComplete="off" />
-        <SelectField label="Role" value={v.role} options={ROLES} onChange={(x) => set({ role: x })} />
-        <SelectField label="Status" value={v.status} options={['Active', 'Suspended']} onChange={(x) => set({ status: x })} />
-        <TextField label="Scope" full value={v.scope} placeholder="FOCIT · news and announcements" onChange={(x) => set({ scope: x })} error={errors.scope} hint="Where and what they can publish." />
+    <FormModal title={editing ? 'Edit Administrator' : 'Add administrator'} onClose={onClose} onSubmit={submit} submitLabel={editing ? 'Save Changes' : 'Add administrator'} size={editing ? 'admin-edit' : 'admin'}>
+      <p className="admin-modal-subtitle">
+        {editing ? 'Update administrator details' : `They can publish only for ${institutionName}.`}
+      </p>
+      <div className="grid2 admin-form-grid">
+        <TextField label="Full name *" value={v.firstName} placeholder="e.g. Aisha" autoComplete="given-name" onChange={(x) => set({ firstName: x })} error={errors.firstName} />
+        <TextField label="Last Name *" value={v.lastName} placeholder="e.g. Bello" autoComplete="family-name" onChange={(x) => set({ lastName: x })} error={errors.lastName} />
+        <TextField label="Email Address *" type="email" full value={v.email} placeholder="Enter email address" onChange={(x) => set({ email: x })} error={errors.email} autoComplete="off" />
+        <SelectField label="Role *" full value={v.role} options={ROLES} placeholder="Select a role" onChange={(x) => set({ role: x })} error={errors.role} />
+        <TextField label="Scope" full value={v.scope} placeholder="e.g FOCIT" onChange={(x) => set({ scope: x })} hint="What this administrator is allowed to publish, and to whom." />
       </div>
     </FormModal>
+  );
+}
+
+export function AdminSuccessModal({ item, onClose }) {
+  const addedOn = new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(item.createdAt));
+
+  return (
+    <Modal title="Administrator Added Successfully" onClose={onClose} size="admin-success" hideHeader>
+      <div className="admin-success">
+        <div className="admin-success-mark"><Icon n="check" s={44} w={2.5} /></div>
+        <h2>Administrator Added Successfully</h2>
+        <p className="admin-success-copy">
+          {item.name} has been added to this device’s administrator list. Invitation email delivery isn’t available in this build.
+        </p>
+        <dl className="admin-success-details">
+          <div><dt>Name</dt><dd>{item.name}</dd></div>
+          <div><dt>Email</dt><dd>{item.email}</dd></div>
+          <div><dt>Role</dt><dd>{item.role.replace(/\b\w/g, (letter) => letter.toUpperCase())}</dd></div>
+          <div><dt>Status</dt><dd className="admin-success-active">{item.status}</dd></div>
+          <div><dt>Added on</dt><dd>{addedOn}</dd></div>
+        </dl>
+        <div className="admin-success-actions">
+          <button type="button" className="btn btn-line" onClick={onClose}>Close</button>
+          <button type="button" className="btn btn-primary" onClick={onClose}>Back to user management</button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 

@@ -3,6 +3,7 @@ import { Icon } from '../components/Icons.jsx';
 import DataTable from '../components/DataTable.jsx';
 import RowMenu from '../components/RowMenu.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import ItemDetailsDialog from '../components/ItemDetailsDialog.jsx';
 import { StatusPill, TypePill } from '../components/Pills.jsx';
 import ContentCell, { openOf, reachOf } from '../components/ContentCell.jsx';
 import { ConfirmDialog } from '../components/Modal.jsx';
@@ -209,6 +210,7 @@ export default function News() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(null);
   const [del, setDel] = useState(null);
+  const [viewing, setViewing] = useState(null);
   const tools = useRef(null);
 
   useEffect(() => {
@@ -231,16 +233,11 @@ export default function News() {
   const filtered = q || status !== 'All' || type !== 'All';
   const clear = () => { setQ(''); setStatus('All'); setType('All'); };
 
-  // Contract §4: school admins submit Draft→PendingApproval; publishing is SuperAdmin; unpublish = archive.
-  const toggleLive = (r) => {
+  // Contract §4: school admins submit Draft→PendingApproval; publishing is SuperAdmin.
+  const submitForApproval = (r) => {
     const now = new Date().toISOString();
-    if (r.status === 'Live') {
-      content.remove(r.id);
-      toast('Unpublished (archived)');
-    } else {
-      content.update(r.id, { status: 'Pending', updatedAt: now });
-      toast('Submitted for approval');
-    }
+    content.update(r.id, { status: 'Pending', updatedAt: now });
+    toast('Submitted for approval');
   };
 
   const columns = [
@@ -254,9 +251,10 @@ export default function News() {
       key: 'action', label: 'Action',
       render: (r) => (
         <RowMenu label={r.title} items={[
-          { label: 'Edit', run: () => setEditing(r) },
-          { label: r.status === 'Live' ? 'Unpublish' : 'Submit for approval', run: () => toggleLive(r) },
-          { label: 'Delete', danger: true, run: () => setDel(r) },
+          { label: 'View Details', icon: 'eye', dividerAfter: true, run: () => setViewing(r) },
+          { label: 'Edit', icon: 'edit', run: () => setEditing(r) },
+          ...(r.status === 'Draft' ? [{ label: 'Publish', icon: 'send', run: () => submitForApproval(r) }] : []),
+          { label: 'Delete', icon: 'trash', run: () => setDel(r) },
         ]} />
       ),
     },
@@ -318,6 +316,13 @@ export default function News() {
       />
 
       {del && <ConfirmDialog title="Delete this item?" text={`“${del.title}” will be removed for everyone. This can’t be undone.`} confirmLabel="Delete" danger onConfirm={() => { content.remove(del.id); toast('Deleted'); }} onClose={() => setDel(null)} />}
+      {viewing && <ItemDetailsDialog item={viewing} fields={[
+        { label: 'Category', value: viewing.articleCategory || viewing.type },
+        { label: 'Priority', value: viewing.priority },
+        { label: 'Audience', value: viewing.audience },
+        { label: 'Push notification', value: viewing.push ? 'On' : 'Off' },
+        { label: 'Status', value: viewing.status },
+      ]} placeholderIcon="news" onClose={() => setViewing(null)} />}
     </div>
   );
 }

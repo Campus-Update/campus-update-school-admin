@@ -3,10 +3,16 @@ import { Icon } from '../components/Icons.jsx';
 import DataTable from '../components/DataTable.jsx';
 import RowMenu from '../components/RowMenu.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import ItemDetailsDialog from '../components/ItemDetailsDialog.jsx';
 import { ScopePill, StatusPill } from '../components/Pills.jsx';
 import { ConfirmDialog } from '../components/Modal.jsx';
 import { useData } from '../context/DataContext.jsx';
 import { fmtDateTime, fmtNum, toDate } from '../lib/format.js';
+
+const eventDetailDate = (value, options) => {
+  const date = toDate(value);
+  return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat(undefined, options).format(date);
+};
 
 function EventEditor({ item, onBack, onSave }) {
   const editing = !!item;
@@ -200,9 +206,14 @@ export default function Events() {
   const [del, setDel] = useState(null);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [viewing, setViewing] = useState(null);
 
   const rows = [...events.rows].sort((a, b) => toDate(a.when) - toDate(b.when));
   const sub = (e) => (e.type === 'Promoted' ? 'Placed by Campus Update · not yours to edit' : e.status === 'Live' ? `Saved by ${fmtNum(e.saved)} students` : 'Not visible to students yet');
+  const submitForApproval = (event) => {
+    events.update(event.id, { status: 'Pending' });
+    toast('Submitted for approval');
+  };
 
   const columns = [
     { key: 'title', label: 'Event', sort: true, render: (r) => (<><span className="cell-link">{r.title}</span><span className="cell-sub">{sub(r)}</span></>) },
@@ -215,7 +226,12 @@ export default function Events() {
       render: (r) => (
         <RowMenu label={r.title} items={r.type === 'Promoted'
           ? [{ label: 'Not yours to edit', disabled: true }]
-          : [{ label: 'Edit', run: () => setEditing(r) }, { label: 'Delete', danger: true, run: () => setDel(r) }]} />
+          : [
+            { label: 'View Details', icon: 'eye', dividerAfter: true, run: () => setViewing(r) },
+            { label: 'Edit', icon: 'edit', run: () => setEditing(r) },
+            ...(r.status === 'Draft' ? [{ label: 'Publish', icon: 'send', run: () => submitForApproval(r) }] : []),
+            { label: 'Delete', icon: 'trash', run: () => setDel(r) },
+          ]} />
       ),
     },
   ];
@@ -246,6 +262,12 @@ export default function Events() {
       </div>
       <DataTable caption="Events" columns={columns} rows={rows} empty={<EmptyState title="No events yet" text="Create an official event for students to save." action={add} />} />
       {del && <ConfirmDialog title="Delete this event?" text={`“${del.title}” will be removed from students’ events. This can’t be undone.`} confirmLabel="Delete" danger onConfirm={() => { events.remove(del.id); toast('Deleted'); }} onClose={() => setDel(null)} />}
+      {viewing && <ItemDetailsDialog item={viewing} fields={[
+        { label: 'Date', value: eventDetailDate(viewing.when, { month: 'numeric', day: 'numeric', year: 'numeric' }) },
+        { label: 'Time', value: eventDetailDate(viewing.when, { hour: 'numeric', minute: '2-digit' }).toUpperCase() },
+        { label: 'Status', value: viewing.status },
+        { label: 'Venue', value: viewing.venue },
+      ]} placeholderIcon="events" onClose={() => setViewing(null)} />}
     </div>
   );
 }

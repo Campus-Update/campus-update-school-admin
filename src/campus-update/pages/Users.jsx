@@ -4,15 +4,44 @@ import DataTable from '../components/DataTable.jsx';
 import RowMenu from '../components/RowMenu.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { StatusPill } from '../components/Pills.jsx';
-import { AdminModal } from '../components/forms.jsx';
-import { ConfirmDialog } from '../components/Modal.jsx';
+import { AdminModal, AdminSuccessModal } from '../components/forms.jsx';
+import { AdminDetailsDialog, DeactivateAdminDialog, SuspendAdminDialog } from '../components/AdminActionDialogs.jsx';
 import { useData } from '../context/DataContext.jsx';
 import { initials, relativeTime } from '../lib/format.js';
 
 export default function Users() {
-  const { admins, toast } = useData();
+  const { admins, institution, toast } = useData();
   const [modal, setModal] = useState(null);
-  const [del, setDel] = useState(null);
+  const [viewing, setViewing] = useState(null);
+  const [deactivating, setDeactivating] = useState(null);
+  const [suspending, setSuspending] = useState(null);
+
+  const activate = (admin) => {
+    admins.update(admin.id, {
+      status: 'Active',
+      activatedAt: new Date().toISOString(),
+    });
+    toast('Administrator activated');
+  };
+
+  const deactivate = (admin, reason) => {
+    admins.update(admin.id, {
+      status: 'Deactivated',
+      deactivatedAt: new Date().toISOString(),
+      deactivationReason: reason,
+    });
+    setDeactivating(null);
+    toast('Administrator deactivated');
+  };
+
+  const suspend = (admin) => {
+    admins.update(admin.id, {
+      status: 'Suspended',
+      suspendedAt: new Date().toISOString(),
+    });
+    setSuspending(null);
+    toast('Administrator suspended');
+  };
 
   const columns = [
     { key: 'name', label: 'Administrator', sort: true, render: (r) => (
@@ -26,9 +55,12 @@ export default function Users() {
       key: 'action', label: 'Action',
       render: (r) => (
         <RowMenu label={r.name} items={[
-          { label: 'Edit', run: () => setModal({ item: r }) },
-          { label: r.status === 'Active' ? 'Suspend' : 'Reactivate', run: () => { admins.update(r.id, { status: r.status === 'Active' ? 'Suspended' : 'Active' }); toast(r.status === 'Active' ? 'Administrator suspended' : 'Administrator reactivated'); } },
-          { label: 'Remove', danger: true, run: () => setDel(r) },
+          { label: 'View Details', icon: 'eye', dividerAfter: true, run: () => setViewing(r) },
+          { label: 'Edit Administrator', icon: 'edit', run: () => setModal({ item: r }) },
+          ...(r.status === 'Active'
+            ? [{ label: 'Suspend User', icon: 'pause', danger: true, run: () => setSuspending(r) }]
+            : [{ label: 'Activate', icon: 'power', variant: 'success', run: () => activate(r) }]),
+          ...(r.status === 'Deactivated' ? [] : [{ label: 'Deactivate User', icon: 'deactivate', danger: true, run: () => setDeactivating(r) }]),
         ]} />
       ),
     },
@@ -45,18 +77,47 @@ export default function Users() {
       </div>
       <DataTable caption="Administrators" columns={columns} rows={admins.rows} empty={<EmptyState title="No administrators" text="Add someone who can publish on behalf of your institution." action={add} />} />
       {modal && (
-        <AdminModal
-          item={modal.item}
-          existing={admins.rows}
-          onClose={() => setModal(null)}
-          onSave={(data) => {
-            if (modal.item) admins.update(modal.item.id, data); else admins.add(data);
-            toast(modal.item ? 'Changes saved' : 'Administrator added');
-            setModal(null);
-          }}
+        modal.success
+          ? <AdminSuccessModal item={modal.success} onClose={() => setModal(null)} />
+          : <AdminModal
+            item={modal.item}
+            existing={admins.rows}
+            institutionName={institution.name}
+            onClose={() => setModal(null)}
+            onSave={(data) => {
+              if (modal.item) {
+                admins.update(modal.item.id, data);
+                toast('Changes saved');
+                setModal(null);
+                return;
+              }
+              const created = { ...data, status: 'Active', lastActive: null, createdAt: new Date().toISOString() };
+              admins.add(created);
+              setModal({ success: created });
+            }}
+          />
+      )}
+      {viewing && (
+        <AdminDetailsDialog
+          item={viewing}
+          onClose={() => setViewing(null)}
+          onDeactivate={() => { setViewing(null); setDeactivating(viewing); }}
         />
       )}
-      {del && <ConfirmDialog title="Remove this administrator?" text={`${del.name} will no longer be able to publish for your institution.`} confirmLabel="Remove" danger onConfirm={() => { admins.remove(del.id); toast('Administrator removed'); }} onClose={() => setDel(null)} />}
+      {deactivating && (
+        <DeactivateAdminDialog
+          item={deactivating}
+          onClose={() => setDeactivating(null)}
+          onConfirm={(reason) => deactivate(deactivating, reason)}
+        />
+      )}
+      {suspending && (
+        <SuspendAdminDialog
+          item={suspending}
+          onClose={() => setSuspending(null)}
+          onConfirm={() => suspend(suspending)}
+        />
+      )}
     </div>
   );
 }

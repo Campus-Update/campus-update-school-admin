@@ -3,7 +3,7 @@ import { Icon } from './Icons.jsx';
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-export function Modal({ title, onClose, children, size = 'md' }) {
+export function Modal({ title, onClose, children, size = 'md', hideHeader = false }) {
   const ref = useRef(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -34,11 +34,13 @@ export function Modal({ title, onClose, children, size = 'md' }) {
 
   return (
     <div className="modal-back" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} className={'modal ' + size} role="dialog" aria-modal="true" aria-labelledby={titleId}>
-        <div className="modal-h">
-          <h2 id={titleId}>{title}</h2>
-          <button type="button" className="icon-btn" aria-label="Close dialog" onClick={onClose}><Icon n="x" s={18} /></button>
-        </div>
+      <div ref={ref} className={'modal ' + size} role="dialog" aria-modal="true" aria-label={hideHeader ? title : undefined} aria-labelledby={hideHeader ? undefined : titleId}>
+        {!hideHeader && (
+          <div className="modal-h">
+            <h2 id={titleId}>{title}</h2>
+            <button type="button" className="icon-btn" aria-label="Close dialog" onClick={onClose}><Icon n="x" s={18} /></button>
+          </div>
+        )}
         {children}
       </div>
     </div>
@@ -46,9 +48,9 @@ export function Modal({ title, onClose, children, size = 'md' }) {
 }
 
 /** A modal wrapping a <form>. `onSubmit` receives the submit event; validate there. */
-export function FormModal({ title, onClose, onSubmit, submitLabel = 'Save changes', children }) {
+export function FormModal({ title, onClose, onSubmit, submitLabel = 'Save changes', children, size = 'md' }) {
   return (
-    <Modal title={title} onClose={onClose}>
+    <Modal title={title} onClose={onClose} size={size}>
       <form onSubmit={onSubmit} noValidate>
         <div className="modal-b">{children}</div>
         <div className="modal-f">

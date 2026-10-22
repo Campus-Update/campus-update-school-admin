@@ -12,6 +12,8 @@ export function StatusPill({ status }) {
     return <span className="pill warn"><i />Rejected</span>;
   if (status === 'Suspended')
     return <span className="pill warn"><i />Suspended</span>;
+  if (status === 'Deactivated')
+    return <span className="pill warn"><i />Deactivated</span>;
   return <span className="pill ok"><i />{status}</span>;
 }
 

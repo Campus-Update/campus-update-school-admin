@@ -3,6 +3,7 @@ import { Icon } from '../components/Icons.jsx';
 import DataTable from '../components/DataTable.jsx';
 import RowMenu from '../components/RowMenu.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import ItemDetailsDialog from '../components/ItemDetailsDialog.jsx';
 import { StatusPill } from '../components/Pills.jsx';
 import { ConfirmDialog } from '../components/Modal.jsx';
 import { useData } from '../context/DataContext.jsx';
@@ -174,6 +175,7 @@ export default function Calendar() {
   const [del, setDel] = useState(null);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [viewing, setViewing] = useState(null);
   const rows = [...calendar.rows].sort((a, b) => toDate(a.date) - toDate(b.date));
 
   const columns = [
@@ -185,9 +187,10 @@ export default function Calendar() {
       key: 'action', label: 'Action',
       render: (r) => (
         <RowMenu label={r.title} items={[
-          { label: 'Edit', run: () => setEditing(r) },
-          { label: r.status === 'Live' ? 'Unpublish' : 'Publish now', run: () => { calendar.update(r.id, { status: r.status === 'Live' ? 'Draft' : 'Live', scheduledFor: null }); toast(r.status === 'Live' ? 'Moved to drafts' : 'Published'); } },
-          { label: 'Delete', danger: true, run: () => setDel(r) },
+          { label: 'View Details', icon: 'eye', dividerAfter: true, run: () => setViewing(r) },
+          { label: 'Edit', icon: 'edit', run: () => setEditing(r) },
+          ...(r.status === 'Draft' ? [{ label: 'Publish', icon: 'send', run: () => { calendar.update(r.id, { status: 'Live', scheduledFor: null }); toast('Published'); } }] : []),
+          { label: 'Delete', icon: 'trash', run: () => setDel(r) },
         ]} />
       ),
     },
@@ -221,6 +224,11 @@ export default function Calendar() {
       </div>
       <DataTable caption="Academic calendar" columns={columns} rows={rows} empty={<EmptyState title="No dates yet" text="Add the first date for this academic session." action={add} />} />
       {del && <ConfirmDialog title="Delete this date?" text={`“${del.title}” will be removed from the academic calendar.`} confirmLabel="Delete" danger onConfirm={() => { calendar.remove(del.id); toast('Deleted'); }} onClose={() => setDel(null)} />}
+      {viewing && <ItemDetailsDialog item={viewing} fields={[
+        { label: 'Date', value: viewing.date ? new Intl.DateTimeFormat(undefined, { month: 'numeric', day: 'numeric', year: 'numeric' }).format(toDate(viewing.date)) : '—' },
+        { label: 'Status', value: viewing.status },
+        { label: 'Category', value: viewing.category },
+      ]} placeholderIcon="calendar" onClose={() => setViewing(null)} />}
     </div>
   );
 }

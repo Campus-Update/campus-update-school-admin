@@ -30,12 +30,13 @@ export function TextField({ label, value, onChange, error, hint, disabled, lock,
   );
 }
 
-export function SelectField({ label, value, onChange, options, error, full }) {
+export function SelectField({ label, value, onChange, options, error, full, placeholder }) {
   const id = useId();
   return (
     <Wrap id={id} label={label} error={error} full={full}>
       <div className={'inp sel' + (error ? ' bad' : '')}>
         <select id={id} value={value} onChange={(e) => onChange(e.target.value)} aria-invalid={error ? 'true' : undefined} aria-describedby={error ? id + '-d' : undefined}>
+          {placeholder && <option value="">{placeholder}</option>}
           {options.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
         <Icon n="down" s={16} w={1.8} c="#6b7280" />

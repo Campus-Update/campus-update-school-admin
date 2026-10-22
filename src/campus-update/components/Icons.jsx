@@ -29,6 +29,14 @@ const P = {
   upload: <g><path d="M12 16V4M7 9l5-5 5 5" /><path d="M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" /></g>,
   save: <g><path d="M5 3h12l4 4v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" /><path d="M7 3v6h10V3M7 21v-8h10v8" /></g>,
   send: <g><path d="M22 2 11 13" /><path d="m22 2-7 20-4-9-9-4z" /></g>,
+  eye: <g><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /></g>,
+  edit: <g><path d="m15 5 4 4M4 20l4.2-.8L19 8.4a2.1 2.1 0 0 0-3-3L5.2 16.2z" /><path d="M14 20h7" /></g>,
+  trash: <g><path d="M4 7h16M10 11v6M14 11v6M5 7l1 14h12l1-14M9 7V4h6v3" /></g>,
+  check: <path d="m5 12 4 4L19 6" />,
+  pause: <g><circle cx="12" cy="12" r="9" /><path d="M10 9v6M14 9v6" /></g>,
+  power: <g><path d="M12 2v10" /><path d="M6.2 5.8a8 8 0 1 0 11.6 0" /></g>,
+  deactivate: <g><path d="M4.9 4.9a10 10 0 1 0 14.2 14.2" /><path d="M12 2v10M2 2l20 20" /></g>,
+  warning: <g><path d="M10.3 3.8 1.9 18.2A2 2 0 0 0 3.6 21h16.8a2 2 0 0 0 1.7-2.8L13.7 3.8a2 2 0 0 0-3.4 0z" /><path d="M12 9v4M12 17h.01" /></g>,
   laptop: <g><rect x="4" y="4.5" width="16" height="12" rx="1.5" /><path d="M2.5 20h19l-1.5-3.5h-16z" /></g>,
 };
 

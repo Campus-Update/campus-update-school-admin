@@ -25,6 +25,7 @@ const fromApi = (it) => ({
   source: it.sourceName || '—',
   audience: it.category || 'All students',
   status: STATUS_FROM_API(it.status),
+  createdAt: it.createdAt || null,
   updatedAt: it.publishedAt,
   publishedAt: it.publishedAt,
   scheduledFor: null,
@@ -117,6 +118,7 @@ export function DataProvider({ children }) {
             id: c.id,
             title: c.title,
             body: c.body || '',
+            createdAt: c.createdAt || null,
             date: (c.publishedAt || '').slice(0, 10),
             category: c.academicSession || 'General',
             imageUrl: c.imageUrl || null,
@@ -271,7 +273,7 @@ export function DataProvider({ children }) {
       rows: calendarRows,
       error: calendarError,
       add: (r) => {
-        const row = { ...r, id: r.id || `cal-${Date.now()}` };
+        const row = { ...r, createdAt: r.createdAt || new Date().toISOString(), id: r.id || `cal-${Date.now()}` };
         setCalendarRows((c) => [row, ...c]);
         if (r.status === 'Draft') return Promise.resolve(true);
         return calendarApi
