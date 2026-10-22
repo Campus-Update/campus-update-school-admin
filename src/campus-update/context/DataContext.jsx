@@ -150,6 +150,7 @@ export function DataProvider({ children }) {
           advertisementsEnabled: p.advertisementsEnabled,
         };
         setPrefsState((prev) => ({
+          ...prev,
           push: p.pushNotificationsEnabled ?? prev.push,
           email: p.newsEnabled ?? prev.email,
           urgent: p.announcementsEnabled ?? prev.urgent,
@@ -160,7 +161,14 @@ export function DataProvider({ children }) {
             .list()
             .then((list) => {
               const s = (Array.isArray(list) ? list : []).find((x) => x.id === p.institutionId);
-              if (s) setInstitution({ name: s.name, short: s.acronym || s.name.slice(0, 8).toUpperCase(), site: s.slug || '' });
+              if (s) {
+                setInstitution((prev) => ({
+                  ...prev,
+                  name: s.name,
+                  short: s.acronym || s.name.slice(0, 8).toUpperCase(),
+                  site: s.slug || prev.site,
+                }));
+              }
             })
             .catch(() => {});
         }
@@ -179,7 +187,7 @@ export function DataProvider({ children }) {
 
   const setPrefs = useCallback(
     (f) => {
-      setPrefsState(f);
+      setPrefsState((prev) => ({ ...prev, ...f }));
       const base = acadRef.current;
       if (!base.institutionId) return;
       authApi
@@ -196,9 +204,11 @@ export function DataProvider({ children }) {
           pushNotificationsEnabled: !!f.push,
           allCampusFeed: !!f.digest,
         })
-        .catch(() => {});
+        .catch((e) => {
+          toast(`Preferences saved on this device, but could not sync: ${e.message}`);
+        });
     },
-    [setPrefsState],
+    [setPrefsState, toast],
   );
 
   const content = useMemo(

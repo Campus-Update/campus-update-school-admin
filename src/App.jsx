@@ -3,7 +3,7 @@ import LoginPage from './components/school/LoginPage.jsx'
 import OverviewPage from './components/school/OverviewPage.jsx'
 import ModulePage from './components/school/ModulePage.jsx'
 import { DataProvider } from './campus-update/context/DataContext.jsx'
-import { getAuth } from './lib/api.js'
+import { clearAuth, getAuth } from './lib/api.js'
 import NewsPage from './campus-update/pages/News.jsx'
 import EventsPage from './campus-update/pages/Events.jsx'
 import CalendarPage from './campus-update/pages/Calendar.jsx'
@@ -36,7 +36,7 @@ const fromHash = () => {
   return PAGES.includes(h) ? h : 'overview'
 }
 
-function SchoolAdminApp() {
+function SchoolAdminApp({ onLogout }) {
   const [route, setRoute] = useState(fromHash)
 
   useEffect(() => {
@@ -49,11 +49,11 @@ function SchoolAdminApp() {
     if (PAGES.includes(id) || id === 'overview') window.location.hash = `/${id}`
   }
 
-  if (route === 'overview') return <OverviewPage onNavigate={navigate} />
+  if (route === 'overview') return <OverviewPage onNavigate={navigate} onLogout={onLogout} />
   const [title, subtitle] = TITLES[route]
   const Page = PAGE_COMPONENTS[route]
   return (
-    <ModulePage active={route} title={title} subtitle={subtitle} onNavigate={navigate}>
+    <ModulePage active={route} title={title} subtitle={subtitle} onNavigate={navigate} onLogout={onLogout}>
       <Page />
     </ModulePage>
   )
@@ -62,9 +62,13 @@ function SchoolAdminApp() {
 export default function App() {
   const [authed, setAuthed] = useState(() => !!getAuth())
   if (!authed) return <LoginPage onLoggedIn={() => setAuthed(true)} />
+  const logout = () => {
+    clearAuth()
+    setAuthed(false)
+  }
   return (
     <DataProvider>
-      <SchoolAdminApp />
+      <SchoolAdminApp onLogout={logout} />
     </DataProvider>
   )
 }

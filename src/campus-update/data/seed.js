@@ -83,5 +83,18 @@ export const DEFAULT_PROFILE = {
   department: 'Administration',
   photo: null,
 };
-export const DEFAULT_INSTITUTION = { name: 'Osun State University', short: 'UNIOSUN', site: 'uniosun.example' };
+export const DEFAULT_INSTITUTION = {
+  name: 'Osun State University',
+  short: 'UNIOSUN',
+  site: 'uniosun.example',
+  industry: 'Education',
+  address: '',
+  contactEmail: '',
+  phone: '',
+  publisherName: '',
+  replyTo: '',
+  defaultAudience: 'Students',
+  defaultPriority: 'Normal',
+  requireUrgentApproval: true,
+};
 export const DEFAULT_PREFS = { push: true, email: true, urgent: true, digest: false };

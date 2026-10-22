@@ -208,6 +208,57 @@
 .source-page .row-sw:first-child { border-top: 0; }
 .source-page .row-sw b { display: block; font-weight: 600; font-size: 14.5px; }
 .source-page .row-sw small { font-size: 13px; color: var(--muted); }
+.source-page .institution-info { margin-top: 18px; }
+.source-page .institution-section { border-top: 1px solid var(--line-soft); margin-top: 22px; padding-top: 20px; }
+.source-page .institution-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+.source-page .institution-section > .fld + .institution-audience { margin-top: 12px; }
+.source-page .institution-audience { margin-bottom: 14px; }
+.source-page .institution-audience > span { display: block; font-size: 13px; color: #3f3f46; margin-bottom: 5px; }
+.source-page .institution-preview { min-height: 40px; border: 1px dashed #c9c9d1; border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.source-page .institution-official { border: 1px solid var(--line); border-radius: 999px; padding: 2px 7px; font-size: 11px; }
+.source-page .institution-defaults .grid2 { margin-bottom: 4px; }
+.source-page .institution-defaults .row-sw { border-top: 0; padding: 14px 0 0; }
+.source-page .notification-group { margin-top: 20px; border-top: 1px solid var(--line-soft); }
+.source-page .notification-group h3 { padding-top: 17px; color: #85888f; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; }
+.source-page .notification-group .row-sw { padding: 13px 0; }
+.source-page .notification-group .row-sw b { font-size: 13.5px; }
+.source-page .notification-group .row-sw small { display: block; font-size: 11.5px; }
+.source-page .notification-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
+.source-page .notification-actions .btn { height: 34px; font-size: 12px; }
+.source-page .security-password .sub,.source-page .login-activity .sub { font-size: 12px; }
+.source-page .security-fields { margin-top: 16px; gap: 12px; }
+.source-page .security-fields .fld label { font-size: 11px; }
+.source-page .security-fields .inp { min-height: 36px; }
+.source-page .security-fields .inp input { font-size: 12px; }
+.source-page .security-hint { margin: 10px 0 14px; color: var(--muted); font-size: 11px; }
+.source-page .security-password > .btn { height: 34px; font-size: 12px; }
+.source-page .security-password > .btn:disabled { opacity: 0.6; }
+.source-page .login-activity { border-top: 1px solid var(--line-soft); margin-top: 22px; padding-top: 20px; }
+.source-page .login-activity h2 { font-size: 16px; }
+.source-page .session-status,.source-page .session-error { padding: 14px 0; color: var(--muted); font-size: 12px; }
+.source-page .session-error { color: var(--red); }
+.source-page .session-row { display: flex; align-items: center; gap: 12px; min-height: 52px; border-bottom: 1px solid var(--line-soft); }
+.source-page .session-device-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; background: #f8f8fb; color: var(--primary); }
+.source-page .session-description { min-width: 0; flex: 1; }
+.source-page .session-description b { display: block; overflow: hidden; color: var(--ink-2); font-size: 11px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.source-page .session-description small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
+.source-page .session-current { border-radius: 5px; background: #e4f6ee; padding: 4px 8px; color: #0b7f56; font-size: 10px; white-space: nowrap; }
+.source-page .session-signout { border: 1px solid #fca5a5; border-radius: 6px; padding: 4px 9px; color: var(--red); font-size: 10px; white-space: nowrap; }
+.source-page .session-signout:hover { background: #fef2f2; }
+.source-page .session-signout-all { margin-top: 14px; border: 1px solid #fca5a5; border-radius: 6px; padding: 7px 12px; color: var(--red); font-size: 11px; }
+.source-page .session-signout-all:hover { background: #fef2f2; }
+.source-page .modal.session-confirm { max-width: 700px; position: relative; padding: 34px 38px 30px; border-radius: 22px; text-align: center; }
+.source-page .session-modal-close { position: absolute; top: 28px; right: 30px; display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid var(--line); border-radius: 50%; color: #3f3f46; }
+.source-page .session-modal-icon { width: 154px; height: 154px; margin: 42px auto 22px; display: grid; place-items: center; border-radius: 50%; background: #fff4f0; color: #e4572e; }
+.source-page .session-modal-icon.alert { background: #fee9e6; color: var(--red); }
+.source-page .session-confirm h2 { font-size: 25px; font-weight: 600; }
+.source-page .session-modal-copy { max-width: 620px; margin: 12px auto 0; color: #5b5b5b; font-size: 18px; line-height: 1.5; }
+.source-page .session-modal-list { margin-top: 26px; padding: 16px 18px; border: 1px solid #dfe3e9; border-radius: 14px; background: #f8f9fb; text-align: left; }
+.source-page .session-modal-list > b { display: block; margin-bottom: 8px; color: #6b7280; font-size: 12px; }
+.source-page .session-modal-list > span { display: flex; align-items: center; gap: 10px; min-height: 28px; color: #344054; font-size: 14px; }
+.source-page .session-modal-actions { display: flex; justify-content: space-between; gap: 14px; margin-top: 30px; border-top: 1px solid var(--line-soft); padding-top: 22px; }
+.source-page .session-modal-actions .btn { min-width: 120px; height: 50px; border-radius: 12px; font-size: 16px; }
+.source-page .session-modal-actions .btn-danger { min-width: 172px; }
 .source-page .sw { width: 38px; height: 22px; border-radius: 999px; background: #a1a1aa; position: relative; flex: none; transition: background 0.15s; }
 .source-page .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.15s; }
 .source-page .sw.on { background: var(--primary); }

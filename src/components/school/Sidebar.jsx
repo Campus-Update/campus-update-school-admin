@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   LogoMark,
   UniversityIcon,
@@ -10,6 +11,7 @@ import {
   SettingsIcon,
   LogoutIcon,
 } from './Icons.jsx'
+import SessionConfirm from '../../campus-update/components/SessionConfirm.jsx'
 
 const PUBLISHING = [
   { id: 'overview', icon: DashboardIcon, label: 'Overview' },
@@ -44,7 +46,8 @@ function NavItem({ item, active, onNavigate, onClose }) {
   )
 }
 
-export default function Sidebar({ active = 'overview', onNavigate, open = false, onClose }) {
+export default function Sidebar({ active = 'overview', onNavigate, open = false, onClose, onLogout }) {
+  const [confirmLogout, setConfirmLogout] = useState(false)
   return (
     <>
       {open && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={onClose} aria-hidden="true" />}
@@ -93,6 +96,7 @@ export default function Sidebar({ active = 'overview', onNavigate, open = false,
           </button>
           <button
             type="button"
+            onClick={() => setConfirmLogout(true)}
             className="flex h-[46px] w-full items-center gap-4 rounded-[10px] px-5 text-[15px] leading-[18px] text-[#DC2626] hover:bg-[#FEF2F2]"
           >
             <LogoutIcon className="h-5 w-5" stroke="#DC2626" />
@@ -100,6 +104,19 @@ export default function Sidebar({ active = 'overview', onNavigate, open = false,
           </button>
         </div>
       </aside>
+      {confirmLogout && (
+        <div className="source-page">
+          <SessionConfirm
+            type="single"
+            device="this device"
+            onClose={() => setConfirmLogout(false)}
+            onConfirm={() => {
+              setConfirmLogout(false)
+              onLogout?.()
+            }}
+          />
+        </div>
+      )}
     </>
   )
 }

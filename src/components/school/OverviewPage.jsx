@@ -120,7 +120,7 @@ function EmptyBox({ title }) {
   )
 }
 
-export default function OverviewPage({ onNavigate }) {
+export default function OverviewPage({ onNavigate, onLogout }) {
   const { content, events, alerts } = useData()
   const ACTIVITY = content.rows.slice(0, 5).map((r) => ({
     title: r.title,
@@ -139,7 +139,7 @@ export default function OverviewPage({ onNavigate }) {
   return (
     <div className="min-h-screen w-full bg-[#F4F4F6] p-3 md:p-[27px]">
       <div className="flex gap-4 md:gap-6">
-        <Sidebar active="overview" onNavigate={onNavigate} open={navOpen} onClose={() => setNavOpen(false)} />
+        <Sidebar active="overview" onNavigate={onNavigate} onLogout={onLogout} open={navOpen} onClose={() => setNavOpen(false)} />
 
         <main className="flex min-w-0 flex-1 flex-col gap-4 md:gap-6">
           <Topbar title="Overview" subtitle="Manage operations, users, and system configuration." onMenu={() => setNavOpen(true)} />

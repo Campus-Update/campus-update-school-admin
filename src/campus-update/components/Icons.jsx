@@ -29,6 +29,7 @@ const P = {
   upload: <g><path d="M12 16V4M7 9l5-5 5 5" /><path d="M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" /></g>,
   save: <g><path d="M5 3h12l4 4v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" /><path d="M7 3v6h10V3M7 21v-8h10v8" /></g>,
   send: <g><path d="M22 2 11 13" /><path d="m22 2-7 20-4-9-9-4z" /></g>,
+  laptop: <g><rect x="4" y="4.5" width="16" height="12" rx="1.5" /><path d="M2.5 20h19l-1.5-3.5h-16z" /></g>,
 };
 
 export const Icon = ({ n, s = 18, w = 1.6, c = 'currentColor' }) => (
