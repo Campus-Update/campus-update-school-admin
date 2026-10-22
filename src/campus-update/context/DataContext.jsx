@@ -13,6 +13,16 @@ export const useData = () => useContext(Ctx);
 const STATUS_TO_API = { Live: 'Published', Draft: 'Draft', Scheduled: 'Draft', Pending: 'PendingApproval', Rejected: 'Rejected' };
 // Contract §4: Published→Live, PendingApproval→Pending; Archived rows are hidden (delete = archive).
 const STATUS_FROM_API = (s) => (s === 'Published' ? 'Live' : s === 'PendingApproval' ? 'Pending' : s);
+const calendarFromApi = (c) => ({
+  id: c.id,
+  title: c.title,
+  body: '',
+  createdAt: c.createdAt || null,
+  date: (c.publishedAt || '').slice(0, 10),
+  category: c.academicSession || 'General',
+  imageUrl: c.imageUrl || null,
+  status: c.status === 'Draft' ? 'Draft' : c.isOfficial ? 'Live' : 'Archived',
+});
 
 const fromApi = (it) => ({
   id: it.id,
@@ -110,33 +120,6 @@ export function DataProvider({ children }) {
 
   useEffect(() => {
     loadContent();
-    calendarApi
-      .list()
-      .then((rows) =>
-        setCalendarRows(
-          // Contract §10: reads return a single calendar object (or 404), not an array.
-          (Array.isArray(rows) ? rows : rows && rows.id ? [rows] : []).map((c) => ({
-            id: c.id,
-            title: c.title,
-            body: c.body || '',
-            createdAt: c.createdAt || null,
-            date: (c.publishedAt || '').slice(0, 10),
-            category: c.academicSession || 'General',
-            imageUrl: c.imageUrl || null,
-            status: 'Live',
-          })),
-        ),
-      )
-      .catch((e) => {
-        // Contract §10: 404 means no calendar yet (clean empty state); any other status is a server fault.
-        if (e && e.status === 404) {
-          setCalendarRows([]);
-          setCalendarError(false);
-        } else {
-          setCalendarRows([]);
-          setCalendarError(true);
-        }
-      });
     authApi
       .profile()
       .then((p) => {
@@ -152,6 +135,14 @@ export function DataProvider({ children }) {
           eventsEnabled: p.eventsEnabled,
           advertisementsEnabled: p.advertisementsEnabled,
         };
+        if (p.institutionId) {
+          calendarApi.manage(p.institutionId)
+            .then((rows) => {
+              setCalendarRows((Array.isArray(rows) ? rows : []).map(calendarFromApi));
+              setCalendarError(false);
+            })
+            .catch(() => { setCalendarRows([]); setCalendarError(true); });
+        }
         setPrefsState((prev) => ({
           ...prev,
           push: p.pushNotificationsEnabled ?? prev.push,
@@ -273,33 +264,72 @@ export function DataProvider({ children }) {
     () => ({
       rows: calendarRows,
       error: calendarError,
-      add: (r) => {
-        const row = { ...r, createdAt: r.createdAt || new Date().toISOString(), id: r.id || `cal-${Date.now()}` };
-        setCalendarRows((c) => [row, ...c]);
-        if (r.status === 'Draft') return Promise.resolve(true);
-        return calendarApi
-          .create({ institutionId: acadRef.current.institutionId, title: r.title, academicSession: r.category || 'General', imageUrl: 'https://campus-update.example/calendars/placeholder.png', publishedAt: new Date(`${r.date}T08:00:00Z`).toISOString(), isOfficial: true })
-          .then(() => true)
-          .catch(() => {
-            toast('Calendar API unavailable — saved on this device only.');
-            return true;
-          });
+      add: async (r) => {
+        const institutionId = acadRef.current.institutionId;
+        if (!institutionId) { toast('Your account is not linked to an institution.'); return false; }
+        const status = r.status === 'Draft' ? 'Draft' : 'Published';
+        const publishedAt = new Date(`${r.date}T08:00:00Z`).toISOString();
+        try {
+          let saved;
+          if (r.imageFile) {
+            const form = new FormData();
+            form.append('institutionId', institutionId);
+            form.append('title', r.title);
+            form.append('academicSession', r.category || 'General');
+            form.append('status', status);
+            form.append('publishedAt', publishedAt);
+            form.append('file', r.imageFile);
+            saved = await calendarApi.upload(form);
+          } else {
+            saved = await calendarApi.create({ institutionId, title: r.title, academicSession: r.category || 'General', imageUrl: '', publishedAt, isOfficial: status === 'Published', status });
+          }
+          setCalendarRows((rows) => [calendarFromApi(saved), ...rows]);
+          return true;
+        } catch (e) { toast(`Calendar save failed: ${e.message}`); return false; }
       },
-      update: (id, patch) => {
-        setCalendarRows((c) => c.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+      update: async (id, patch) => {
         const row = calendarRows.find((x) => x.id === id);
-        if (row && String(row.id).length > 12) {
-          return calendarApi.update(id, { institutionId: acadRef.current.institutionId, title: (patch.title ?? row.title), academicSession: (patch.category ?? row.category) || 'General', imageUrl: 'https://campus-update.example/calendars/placeholder.png', publishedAt: new Date(`${patch.date ?? row.date}T08:00:00Z`).toISOString(), isOfficial: true }).then(() => true).catch(() => {
-            toast('Calendar API unavailable — saved on this device only.');
-            return true;
-          });
-        }
-        return Promise.resolve(true);
+        if (!row) return false;
+        const institutionId = acadRef.current.institutionId;
+        const status = patch.status === 'Draft' ? 'Draft' : 'Published';
+        const body = {
+          institutionId,
+          title: patch.title ?? row.title,
+          academicSession: (patch.category ?? row.category) || 'General',
+          imageUrl: '',
+          publishedAt: new Date(`${patch.date ?? row.date}T08:00:00Z`).toISOString(),
+          isOfficial: status === 'Published',
+          status,
+        };
+        try {
+          let saved;
+          if (patch.imageFile) {
+            const form = new FormData();
+            form.append('institutionId', institutionId);
+            form.append('title', body.title);
+            form.append('academicSession', body.academicSession);
+            form.append('status', status);
+            form.append('publishedAt', body.publishedAt);
+            form.append('calendarId', id);
+            form.append('file', patch.imageFile);
+            saved = await calendarApi.upload(form);
+          } else if (row.status === 'Draft' && status === 'Published') {
+            await calendarApi.update(id, body);
+            saved = await calendarApi.publish(id);
+          } else {
+            saved = await calendarApi.update(id, body);
+          }
+          if (patch.imageFile && saved.id !== id) await calendarApi.remove(id);
+          setCalendarRows((rows) => rows.map((x) => x.id === id ? calendarFromApi(saved) : x));
+          return true;
+        } catch (e) { toast(`Calendar save failed: ${e.message}`); return false; }
       },
-      remove: (id) => {
-        setCalendarRows((c) => c.filter((x) => x.id !== id));
-        if (String(id).length > 12) return calendarApi.remove(id).catch(() => {});
-        return Promise.resolve();
+      remove: async (id) => {
+        try {
+          await calendarApi.remove(id);
+          setCalendarRows((rows) => rows.filter((x) => x.id !== id));
+          return true;
+        } catch (e) { toast(`Draft delete failed: ${e.message}`); return false; }
       },
     }),
     [calendarRows, calendarError, toast],
