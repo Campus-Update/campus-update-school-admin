@@ -24,6 +24,11 @@ const P = {
   clock: <g><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></g>,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   x: <path d="M6 6l12 12M18 6L6 18" />,
+  link: <g><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1" /><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.1-1.1" /></g>,
+  list: <g><path d="M9 6h11M9 12h11M9 18h11" /><path d="M4 6h.01M4 12h.01M4 18h.01" /></g>,
+  upload: <g><path d="M12 16V4M7 9l5-5 5 5" /><path d="M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" /></g>,
+  save: <g><path d="M5 3h12l4 4v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" /><path d="M7 3v6h10V3M7 21v-8h10v8" /></g>,
+  send: <g><path d="M22 2 11 13" /><path d="m22 2-7 20-4-9-9-4z" /></g>,
 };
 
 export const Icon = ({ n, s = 18, w = 1.6, c = 'currentColor' }) => (

@@ -5,10 +5,200 @@ import RowMenu from '../components/RowMenu.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { StatusPill, TypePill } from '../components/Pills.jsx';
 import ContentCell, { openOf, reachOf } from '../components/ContentCell.jsx';
-import { ContentModal } from '../components/forms.jsx';
 import { ConfirmDialog } from '../components/Modal.jsx';
 import { useData } from '../context/DataContext.jsx';
-import { CONTENT_TYPES, STATUSES } from '../data/metrics.js';
+import { AUDIENCES, CONTENT_TYPES, STATUSES } from '../data/metrics.js';
+
+const ARTICLE_CATEGORIES = ['General', 'Academic', 'Campus Life', 'Research', 'Sports', 'Student Affairs'];
+
+function ArticleEditor({ item, onBack, onSave }) {
+  const editing = !!item;
+  const [article, setArticle] = useState(() => item ? ({
+    ...item,
+    articleCategory: item.articleCategory || ARTICLE_CATEGORIES[0],
+    priority: item.priority || 'Normal',
+    audience: item.audience || 'Entire institution',
+    push: item.push ? 'Standard' : 'Off',
+    body: item.body || '',
+  }) : ({
+    title: '',
+    articleCategory: ARTICLE_CATEGORIES[0],
+    priority: 'Normal',
+    audience: 'Entire institution',
+    push: 'Standard',
+    body: '',
+  }));
+  const [image, setImage] = useState(null);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const bodyRef = useRef(null);
+  const imageRef = useRef(null);
+
+  const format = (before, after = before) => {
+    const input = bodyRef.current;
+    if (!input) return;
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const selected = article.body.slice(start, end);
+    const replacement = `${before}${selected || 'text'}${after}`;
+    setArticle((current) => ({ ...current, body: current.body.slice(0, start) + replacement + current.body.slice(end) }));
+    requestAnimationFrame(() => {
+      input.focus();
+      input.setSelectionRange(start + before.length, start + before.length + (selected || 'text').length);
+    });
+  };
+
+  const pickImage = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      setError('Choose a JPG or PNG image.');
+      event.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be 5MB or smaller.');
+      event.target.value = '';
+      return;
+    }
+    setError('');
+    const reader = new FileReader();
+    reader.onload = () => setImage({ name: file.name, src: reader.result });
+    reader.onerror = () => setError('Could not read this image. Try another file.');
+    reader.readAsDataURL(file);
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    const action = event.nativeEvent.submitter?.value;
+    if (article.title.trim().length < 3) {
+      setError('Enter an article headline of at least 3 characters.');
+      return;
+    }
+    if (!editing && !article.body.trim()) {
+      setError('Write the article body before saving.');
+      bodyRef.current?.focus();
+      return;
+    }
+    setError('');
+    setSaving(true);
+    const saved = await onSave({
+      ...article,
+      title: article.title.trim(),
+      articleCategory: article.articleCategory,
+      type: article.type || 'News',
+      priority: article.priority,
+      audience: article.audience,
+      push: article.push !== 'Off',
+      body: article.body.trim(),
+      status: action === 'approval' ? 'Pending' : (item?.status || 'Draft'),
+      source: article.source || 'Institution',
+    });
+    setSaving(false);
+    if (saved) onBack();
+  };
+
+  return (
+    <form className="article-editor" onSubmit={submit} noValidate>
+      <button type="button" className="article-back" onClick={onBack}>
+        <Icon n="left" s={16} w={1.8} /> Back to News
+      </button>
+      <h2>{editing ? 'Edit Article' : 'Post New Article'}</h2>
+      <div className="article-fields">
+        <label className="article-field article-field-full">
+          <span>Article Headline</span>
+          <input
+            autoFocus
+            value={article.title}
+            onChange={(event) => setArticle((current) => ({ ...current, title: event.target.value }))}
+            placeholder="Enter compelling headline..."
+            aria-invalid={!!error && article.title.trim().length < 3}
+          />
+        </label>
+        <label className="article-field">
+          <span>Category</span>
+          <select value={article.articleCategory} onChange={(event) => setArticle((current) => ({ ...current, articleCategory: event.target.value }))}>
+            {ARTICLE_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
+          </select>
+        </label>
+        <label className="article-field">
+          <span>Priority</span>
+          <select value={article.priority} onChange={(event) => setArticle((current) => ({ ...current, priority: event.target.value }))}>
+            <option value="Normal">Standard</option>
+            <option value="Important">Important</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+        </label>
+        <label className="article-field">
+          <span>Audience</span>
+          <select value={article.audience} onChange={(event) => setArticle((current) => ({ ...current, audience: event.target.value }))}>
+            {AUDIENCES.map((audience) => <option key={audience}>{audience}</option>)}
+          </select>
+        </label>
+        <label className="article-field">
+          <span>Push notification</span>
+          <select value={article.push} onChange={(event) => setArticle((current) => ({ ...current, push: event.target.value }))}>
+            <option>Standard</option>
+            <option>Off</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="article-content">
+        <div className="article-field article-body-field">
+          <label htmlFor="article-body">Article Body</label>
+          <div className="article-body">
+            <div className="article-format" role="toolbar" aria-label="Article formatting">
+              <button type="button" aria-label="Bold" onClick={() => format('**')}><b>B</b></button>
+              <button type="button" aria-label="Italic" onClick={() => format('*')}><i>I</i></button>
+              <button type="button" aria-label="Insert link" onClick={() => format('[', '](https://)')}><Icon n="link" s={15} /></button>
+              <button type="button" aria-label="Bulleted list" onClick={() => format('- ', '')}><Icon n="list" s={16} /></button>
+            </div>
+            <textarea
+              id="article-body"
+              ref={bodyRef}
+              rows={7}
+              value={article.body}
+              onChange={(event) => setArticle((current) => ({ ...current, body: event.target.value }))}
+              placeholder="Write full story here..."
+              aria-invalid={!!error && !article.body.trim()}
+            />
+          </div>
+        </div>
+        <div className="article-upload">
+          <input ref={imageRef} type="file" accept="image/jpeg,image/png" onChange={pickImage} hidden />
+          {image ? (
+            <div className="article-image-preview">
+              <img src={image.src} alt="Selected article" />
+              <span>{image.name}</span>
+              <button type="button" onClick={() => { setImage(null); imageRef.current.value = ''; }}>Remove image</button>
+            </div>
+          ) : item?.imageUrl ? (
+            <div className="article-image-preview">
+              <img src={item.imageUrl} alt="Article" />
+              <button type="button" onClick={() => setArticle((current) => ({ ...current, imageUrl: null }))}>Remove image</button>
+            </div>
+          ) : (
+            <button type="button" className="article-upload-prompt" onClick={() => imageRef.current?.click()}>
+              <span className="article-upload-icon"><Icon n="upload" s={19} /></span>
+              <b>Upload your image here</b>
+              <small>Supports JPG or PNG. Max file size 5MB.</small>
+            </button>
+          )}
+        </div>
+      </div>
+      {error && <p className="article-error" role="alert">{error}</p>}
+      <div className="article-actions">
+        <button type="submit" name="action" value="draft" className="btn btn-line" disabled={saving}>
+          {editing ? 'Save Changes' : 'Save Draft'} <Icon n="save" s={15} />
+        </button>
+        <button type="submit" name="action" value="approval" className="btn btn-primary" disabled={saving}>
+          {saving ? 'Saving...' : editing ? 'Save & Submit for Review' : 'Review & Publish News'} <Icon n="send" s={16} />
+        </button>
+      </div>
+    </form>
+  );
+}
 
 export default function News() {
   const { content, toast } = useData();
@@ -16,7 +206,8 @@ export default function News() {
   const [status, setStatus] = useState('All');
   const [type, setType] = useState('All');
   const [filterOpen, setFilterOpen] = useState(false);
-  const [modal, setModal] = useState(null); // { item? }
+  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [del, setDel] = useState(null);
   const tools = useRef(null);
 
@@ -63,7 +254,7 @@ export default function News() {
       key: 'action', label: 'Action',
       render: (r) => (
         <RowMenu label={r.title} items={[
-          { label: 'Edit', run: () => setModal({ item: r }) },
+          { label: 'Edit', run: () => setEditing(r) },
           { label: r.status === 'Live' ? 'Unpublish' : 'Submit for approval', run: () => toggleLive(r) },
           { label: 'Delete', danger: true, run: () => setDel(r) },
         ]} />
@@ -71,7 +262,23 @@ export default function News() {
     },
   ];
 
-  const add = <button type="button" className="btn btn-primary" onClick={() => setModal({})}><Icon n="plus" s={20} w={1.5} />New news article</button>;
+  const add = <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}><Icon n="plus" s={20} w={1.5} />New news article</button>;
+
+  if (creating || editing) {
+    return (
+      <ArticleEditor
+        item={editing}
+        onBack={() => { setCreating(false); setEditing(null); }}
+        onSave={async (data) => {
+          const saved = editing
+            ? await content.update(editing.id, data)
+            : await content.add(data);
+          if (saved) toast(editing ? 'Changes saved' : data.status === 'Pending' ? 'Submitted for approval' : 'Draft saved');
+          return saved;
+        }}
+      />
+    );
+  }
 
   return (
     <div>
@@ -110,17 +317,6 @@ export default function News() {
         }
       />
 
-      {modal && (
-        <ContentModal
-          item={modal.item}
-          onClose={() => setModal(null)}
-          onSave={(data) => {
-            if (modal.item) content.update(modal.item.id, data); else content.add(data);
-            toast(modal.item ? 'Changes saved' : data.status === 'Live' ? 'Published' : 'Saved');
-            setModal(null);
-          }}
-        />
-      )}
       {del && <ConfirmDialog title="Delete this item?" text={`“${del.title}” will be removed for everyone. This can’t be undone.`} confirmLabel="Delete" danger onConfirm={() => { content.remove(del.id); toast('Deleted'); }} onClose={() => setDel(null)} />}
     </div>
   );

@@ -331,3 +331,132 @@
   .source-page .stats4 { gap: 14px; }
   .source-page .stat { min-height: 0; padding: 20px; }
 }
+
+/* ---------- new article editor ---------- */
+.source-page .article-editor { max-width: 1120px; }
+.source-page .article-back { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; margin: -2px 0 22px; }
+.source-page .article-back:hover { color: var(--primary-ink); }
+.source-page .article-editor h2 { font-size: 17px; font-weight: 600; margin-bottom: 18px; }
+.source-page .article-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
+.source-page .article-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: #52525b; font-size: 13px; }
+.source-page .article-field-full { grid-column: 1 / -1; }
+.source-page .article-field input,
+.source-page .article-field select { width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 0 12px; outline: none; color: var(--ink-2); font-size: 13px; }
+.source-page .article-field input:focus,
+.source-page .article-field select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, .12); }
+.source-page .article-field input::placeholder { color: #a1a1aa; }
+.source-page .article-content { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-top: 20px; align-items: stretch; }
+.source-page .article-body { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+.source-page .article-format { display: flex; align-items: center; gap: 4px; height: 34px; padding: 0 8px; background: #f3f3f4; }
+.source-page .article-format button { display: grid; place-items: center; width: 25px; height: 26px; border-radius: 5px; color: var(--primary); font-size: 13px; }
+.source-page .article-format button:hover { background: #e6e5fa; }
+.source-page .article-body textarea { display: block; width: 100%; min-height: 128px; border: 0; resize: vertical; outline: 0; padding: 9px 10px; background: #fff; font-size: 12px; line-height: 1.5; }
+.source-page .article-body textarea::placeholder { color: #a1a1aa; }
+.source-page .article-upload { min-height: 176px; border: 1px dashed #cbd0d9; border-radius: 8px; overflow: hidden; background: #fafafa; }
+.source-page .article-upload-prompt { width: 100%; height: 100%; min-height: 176px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--ink-2); }
+.source-page .article-upload-prompt:hover { background: #f6f6ff; }
+.source-page .article-upload-icon { width: 68px; height: 46px; border: 1px solid var(--primary); border-radius: 999px; display: grid; place-items: center; color: var(--primary); }
+.source-page .article-upload-prompt b { font-size: 12px; font-weight: 600; }
+.source-page .article-upload-prompt small { color: #9ca3af; font-size: 10px; }
+.source-page .article-image-preview { height: 100%; min-height: 176px; position: relative; display: grid; place-items: center; }
+.source-page .article-image-preview img { width: 100%; height: 100%; min-height: 176px; position: absolute; inset: 0; object-fit: cover; }
+.source-page .article-image-preview span,
+.source-page .article-image-preview button { z-index: 1; padding: 5px 8px; border-radius: 5px; background: rgba(24, 24, 27, .78); color: #fff; font-size: 11px; }
+.source-page .article-image-preview button { position: absolute; right: 8px; top: 8px; }
+.source-page .article-error { color: #b42318; font-size: 12px; margin-top: 10px; }
+.source-page .article-actions { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
+.source-page .article-actions .btn { min-height: 40px; font-size: 12px; }
+.source-page .article-actions .btn-line { padding: 0 14px; }
+.source-page .article-actions .btn-primary { padding: 0 16px; }
+.source-page .article-actions .btn:disabled { opacity: .65; }
+
+.source-page .event-editor { max-width: 1120px; }
+.source-page .event-back { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; margin: -2px 0 22px; }
+.source-page .event-back:hover { color: var(--primary-ink); }
+.source-page .event-editor h2 { font-size: 17px; font-weight: 600; margin-bottom: 18px; }
+.source-page .event-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
+.source-page .event-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: #52525b; font-size: 13px; }
+.source-page .event-field-full { grid-column: 1 / -1; }
+.source-page .event-field input,
+.source-page .event-field select { width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 0 12px; outline: none; color: var(--ink-2); font-size: 13px; }
+.source-page .event-field input:focus,
+.source-page .event-field select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, .12); }
+.source-page .event-field input::placeholder { color: #a1a1aa; }
+.source-page .event-content { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-top: 20px; align-items: stretch; }
+.source-page .event-body { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+.source-page .event-format { display: flex; align-items: center; gap: 4px; height: 34px; padding: 0 8px; background: #f3f3f4; }
+.source-page .event-format button { display: grid; place-items: center; width: 25px; height: 26px; border-radius: 5px; color: var(--primary); font-size: 13px; }
+.source-page .event-format button:hover { background: #e6e5fa; }
+.source-page .event-body textarea { display: block; width: 100%; min-height: 128px; border: 0; resize: vertical; outline: 0; padding: 9px 10px; background: #fff; font-size: 12px; line-height: 1.5; }
+.source-page .event-body textarea::placeholder { color: #a1a1aa; }
+.source-page .event-upload { min-height: 176px; border: 1px dashed #cbd0d9; border-radius: 8px; overflow: hidden; background: #fafafa; }
+.source-page .event-upload-prompt { width: 100%; height: 100%; min-height: 176px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--ink-2); }
+.source-page .event-upload-prompt:hover { background: #f6f6ff; }
+.source-page .event-upload-icon { width: 68px; height: 46px; border: 1px solid var(--primary); border-radius: 999px; display: grid; place-items: center; color: var(--primary); }
+.source-page .event-upload-prompt b { font-size: 12px; font-weight: 600; }
+.source-page .event-upload-prompt small { color: #9ca3af; font-size: 10px; }
+.source-page .event-image-preview { height: 100%; min-height: 176px; position: relative; display: grid; place-items: center; }
+.source-page .event-image-preview img { width: 100%; height: 100%; min-height: 176px; position: absolute; inset: 0; object-fit: cover; }
+.source-page .event-image-preview span,
+.source-page .event-image-preview button { z-index: 1; padding: 5px 8px; border-radius: 5px; background: rgba(24, 24, 27, .78); color: #fff; font-size: 11px; }
+.source-page .event-image-preview button { position: absolute; right: 8px; top: 8px; }
+.source-page .event-error { color: #b42318; font-size: 12px; margin-top: 10px; }
+.source-page .event-actions { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
+.source-page .event-actions .btn { min-height: 40px; font-size: 12px; }
+.source-page .event-actions .btn-line { padding: 0 14px; }
+.source-page .event-actions .btn-primary { padding: 0 16px; }
+.source-page .event-actions .btn:disabled { opacity: .65; }
+.source-page .event-input-wrap { position: relative; display: flex; align-items: center; }
+.source-page .event-input-wrap input { padding-right: 34px !important; }
+.source-page .event-input-wrap svg { position: absolute; right: 10px; pointer-events: none; }
+
+.source-page .schedule-editor { max-width: 1120px; }
+.source-page .schedule-back { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; margin: -2px 0 22px; }
+.source-page .schedule-back:hover { color: var(--primary-ink); }
+.source-page .schedule-editor h2 { font-size: 17px; font-weight: 600; margin-bottom: 18px; }
+.source-page .schedule-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
+.source-page .schedule-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: #52525b; font-size: 13px; }
+.source-page .schedule-field-full { grid-column: 1 / -1; }
+.source-page .schedule-field input,
+.source-page .schedule-field select { width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 0 12px; outline: none; color: var(--ink-2); font-size: 13px; }
+.source-page .schedule-field input:focus,
+.source-page .schedule-field select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, .12); }
+.source-page .schedule-field input::placeholder { color: #a1a1aa; }
+.source-page .schedule-content { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-top: 20px; align-items: stretch; }
+.source-page .schedule-body { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+.source-page .schedule-format { display: flex; align-items: center; gap: 4px; height: 34px; padding: 0 8px; background: #f3f3f4; }
+.source-page .schedule-format button { display: grid; place-items: center; width: 25px; height: 26px; border-radius: 5px; color: var(--primary); font-size: 13px; }
+.source-page .schedule-format button:hover { background: #e6e5fa; }
+.source-page .schedule-body textarea { display: block; width: 100%; min-height: 128px; border: 0; resize: vertical; outline: 0; padding: 9px 10px; background: #fff; font-size: 12px; line-height: 1.5; }
+.source-page .schedule-body textarea::placeholder { color: #a1a1aa; }
+.source-page .schedule-upload { min-height: 176px; border: 1px dashed #cbd0d9; border-radius: 8px; overflow: hidden; background: #fafafa; }
+.source-page .schedule-upload-prompt { width: 100%; height: 100%; min-height: 176px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--ink-2); }
+.source-page .schedule-upload-prompt:hover { background: #f6f6ff; }
+.source-page .schedule-upload-icon { width: 68px; height: 46px; border: 1px solid var(--primary); border-radius: 999px; display: grid; place-items: center; color: var(--primary); }
+.source-page .schedule-upload-prompt b { font-size: 12px; font-weight: 600; }
+.source-page .schedule-upload-prompt small { color: #9ca3af; font-size: 10px; }
+.source-page .schedule-image-preview { height: 100%; min-height: 176px; position: relative; display: grid; place-items: center; }
+.source-page .schedule-image-preview img { width: 100%; height: 100%; min-height: 176px; position: absolute; inset: 0; object-fit: cover; }
+.source-page .schedule-image-preview span,
+.source-page .schedule-image-preview button { z-index: 1; padding: 5px 8px; border-radius: 5px; background: rgba(24, 24, 27, .78); color: #fff; font-size: 11px; }
+.source-page .schedule-image-preview button { position: absolute; right: 8px; top: 8px; }
+.source-page .schedule-error { color: #b42318; font-size: 12px; margin-top: 10px; }
+.source-page .schedule-actions { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
+.source-page .schedule-actions .btn { min-height: 40px; font-size: 12px; }
+.source-page .schedule-actions .btn-line { padding: 0 14px; }
+.source-page .schedule-actions .btn-primary { padding: 0 16px; }
+.source-page .schedule-actions .btn:disabled { opacity: .65; }
+.source-page .schedule-input-wrap { position: relative; display: flex; align-items: center; }
+.source-page .schedule-input-wrap input { padding-right: 34px !important; }
+.source-page .schedule-input-wrap svg { position: absolute; right: 10px; pointer-events: none; }
+
+@media (max-width: 700px) {
+  .source-page .article-content, .source-page .event-content, .source-page .schedule-content { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .source-page .article-fields, .source-page .event-fields, .source-page .schedule-fields { grid-template-columns: 1fr; gap: 16px; }
+  .source-page .article-field-full, .source-page .event-field-full, .source-page .schedule-field-full { grid-column: auto; }
+  .source-page .article-actions, .source-page .event-actions, .source-page .schedule-actions { flex-wrap: wrap; }
+  .source-page .article-actions .btn, .source-page .event-actions .btn, .source-page .schedule-actions .btn { flex: 1; }
+}

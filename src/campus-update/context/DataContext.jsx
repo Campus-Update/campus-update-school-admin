@@ -18,6 +18,8 @@ const fromApi = (it) => ({
   id: it.id,
   title: it.title,
   body: it.body || '',
+  imageUrl: it.imageUrl || null,
+  articleCategory: it.articleCategory || 'General',
   type: it.type,
   priority: it.urgency || 'Normal',
   source: it.sourceName || '—',
@@ -39,6 +41,7 @@ const toApi = (r, withType, institutionId) => {
   const body = {
     title: r.title,
     body: r.body || r.title,
+    articleCategory: r.articleCategory || null,
     summary: null,
     urgency: r.priority || 'Normal',
     sourceName: r.source && r.source !== '—' ? r.source : 'Institution',
@@ -113,8 +116,10 @@ export function DataProvider({ children }) {
           (Array.isArray(rows) ? rows : []).map((c) => ({
             id: c.id,
             title: c.title,
+            body: c.body || '',
             date: (c.publishedAt || '').slice(0, 10),
             category: c.academicSession || 'General',
+            imageUrl: c.imageUrl || null,
             status: 'Live',
           })),
         ),
@@ -203,8 +208,20 @@ export function DataProvider({ children }) {
       add: (r) =>
         contentApi
           .create(toApi({ ...r, type: r.type || 'News' }, true, acadRef.current.institutionId))
-          .then((created) => setItems((c) => [fromApi(created), ...c]))
-          .catch((e) => toast(`Could not save: ${e.message}`)),
+          .then((created) => {
+            const requestedStatus = STATUS_TO_API[r.status] || 'Draft';
+            const applyStatus = requestedStatus === 'Draft'
+              ? Promise.resolve()
+              : contentApi.setStatus(created.id, requestedStatus);
+            return applyStatus.then(() => {
+              setItems((c) => [fromApi({ ...created, status: requestedStatus }), ...c]);
+              return true;
+            });
+          })
+          .catch((e) => {
+            toast(`Could not save: ${e.message}`);
+            return false;
+          }),
       update: (id, patch) => {
         const prev = items.find((x) => x.id === id);
         const next = { ...prev, ...patch };
@@ -212,9 +229,11 @@ export function DataProvider({ children }) {
         return contentApi
           .update(id, toApi(next, false, acadRef.current.institutionId))
           .then(() => (patch.status && patch.status !== prev?.status ? contentApi.setStatus(id, STATUS_TO_API[patch.status] || patch.status) : null))
+          .then(() => true)
           .catch((e) => {
             toast(`Save failed: ${e.message}`);
             loadContent(); // revert optimistic row to server truth
+            return false;
           });
       },
       remove: (id) =>
@@ -244,17 +263,25 @@ export function DataProvider({ children }) {
       add: (r) => {
         const row = { ...r, id: r.id || `cal-${Date.now()}` };
         setCalendarRows((c) => [row, ...c]);
+        if (r.status === 'Draft') return Promise.resolve(true);
         return calendarApi
           .create({ institutionId: null, title: r.title, academicSession: r.category || 'General', imageUrl: 'https://campus-update.example/calendars/placeholder.png', publishedAt: new Date(`${r.date}T08:00:00Z`).toISOString(), isOfficial: true })
-          .catch(() => toast('Calendar API unavailable — saved on this device only.'));
+          .then(() => true)
+          .catch(() => {
+            toast('Calendar API unavailable — saved on this device only.');
+            return true;
+          });
       },
       update: (id, patch) => {
         setCalendarRows((c) => c.map((x) => (x.id === id ? { ...x, ...patch } : x)));
         const row = calendarRows.find((x) => x.id === id);
         if (row && String(row.id).length > 12) {
-          return calendarApi.update(id, { institutionId: null, title: (patch.title ?? row.title), academicSession: (patch.category ?? row.category) || 'General', imageUrl: 'https://campus-update.example/calendars/placeholder.png', publishedAt: new Date(`${patch.date ?? row.date}T08:00:00Z`).toISOString(), isOfficial: true }).catch(() => toast('Calendar API unavailable — saved on this device only.'));
+          return calendarApi.update(id, { institutionId: null, title: (patch.title ?? row.title), academicSession: (patch.category ?? row.category) || 'General', imageUrl: 'https://campus-update.example/calendars/placeholder.png', publishedAt: new Date(`${patch.date ?? row.date}T08:00:00Z`).toISOString(), isOfficial: true }).then(() => true).catch(() => {
+            toast('Calendar API unavailable — saved on this device only.');
+            return true;
+          });
         }
-        return Promise.resolve();
+        return Promise.resolve(true);
       },
       remove: (id) => {
         setCalendarRows((c) => c.filter((x) => x.id !== id));
