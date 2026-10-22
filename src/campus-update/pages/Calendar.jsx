@@ -41,8 +41,8 @@ function ScheduleEditor({ item, onBack, onSave }) {
   const pickImage = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!['image/jpeg', 'image/png'].includes(file.type)) {
-      setError('Choose a JPG or PNG image.');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Choose a JPG, PNG or WebP image.');
       event.target.value = '';
       return;
     }
@@ -53,7 +53,7 @@ function ScheduleEditor({ item, onBack, onSave }) {
     }
     setError('');
     const reader = new FileReader();
-    reader.onload = () => setImage({ name: file.name, src: reader.result });
+    reader.onload = () => setImage({ name: file.name, src: reader.result, file });
     reader.onerror = () => setError('Could not read this image. Try another file.');
     reader.readAsDataURL(file);
   };
@@ -67,6 +67,10 @@ function ScheduleEditor({ item, onBack, onSave }) {
     }
     if (!schedule.date) {
       setError('Choose the schedule date.');
+      return;
+    }
+    if (action === 'approval' && !image?.file && !item?.imageUrl) {
+      setError('Upload a calendar image before publishing.');
       return;
     }
     if (!editing && !schedule.body.trim()) {
@@ -83,6 +87,7 @@ function ScheduleEditor({ item, onBack, onSave }) {
       title: schedule.title.trim(),
       body: schedule.body.trim(),
       status: action === 'approval' ? 'Live' : editing ? item.status : 'Draft',
+      imageFile: image?.file || null,
     });
     setSaving(false);
     if (saved !== false) onBack();
@@ -140,7 +145,7 @@ function ScheduleEditor({ item, onBack, onSave }) {
           </div>
         </div>
         <div className="schedule-upload">
-          <input ref={imageRef} type="file" accept="image/jpeg,image/png" onChange={pickImage} hidden />
+          <input ref={imageRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={pickImage} hidden />
           {image ? (
             <div className="schedule-image-preview">
               <img src={image.src} alt="Selected schedule" />
@@ -155,7 +160,7 @@ function ScheduleEditor({ item, onBack, onSave }) {
             <button type="button" className="schedule-upload-prompt" onClick={() => imageRef.current?.click()}>
               <span className="schedule-upload-icon"><Icon n="upload" s={19} /></span>
               <b>Upload your image here</b>
-              <small>Supports JPG or PNG. Max file size 5MB.</small>
+              <small>Supports JPG, PNG or WebP. Max file size 5MB.</small>
             </button>
           )}
         </div>
@@ -189,8 +194,10 @@ export default function Calendar() {
         <RowMenu label={r.title} items={[
           { label: 'View Details', icon: 'eye', dividerAfter: true, run: () => setViewing(r) },
           { label: 'Edit', icon: 'edit', run: () => setEditing(r) },
-          ...(r.status === 'Draft' ? [{ label: 'Publish', icon: 'send', run: () => { calendar.update(r.id, { status: 'Live', scheduledFor: null }); toast('Published'); } }] : []),
-          { label: 'Delete', icon: 'trash', run: () => setDel(r) },
+          ...(r.status === 'Draft' ? [
+            { label: 'Publish', icon: 'send', run: async () => { const ok = await calendar.update(r.id, { status: 'Live' }); if (ok) toast('Published'); } },
+            { label: 'Delete', icon: 'trash', run: () => setDel(r) },
+          ] : []),
         ]} />
       ),
     },
@@ -207,8 +214,7 @@ export default function Calendar() {
           const saved = editing
             ? await calendar.update(editing.id, data)
             : await calendar.add(data);
-          if (data.status === 'Draft' && !editing) toast('Draft kept for this session; calendar drafts are not supported by the API.');
-          else if (saved !== false) toast(editing ? 'Changes saved' : 'Schedule published');
+          if (saved !== false) toast(data.status === 'Draft' ? 'Draft saved' : editing ? 'Changes saved' : 'Schedule published');
           return saved;
         }}
       />
@@ -219,11 +225,11 @@ export default function Calendar() {
     <div>
       <div className="toolbar">
         <div className="note"><span><b>Calendar dates are institutional.</b> Only administrators at {institution.name} can add or change these. Students can read them but never edit.</span></div>
-        {calendar.error && <div className="note"><span><b>Calendar service is returning server errors on staging (contract §10 says 200/404).</b> Dates you add are kept on this device until the endpoint recovers; reported to backend with traceIds.</span></div>}
+        {calendar.error && <div className="note"><span><b>Could not load calendars from the staging API.</b> Refresh the page or try again shortly.</span></div>}
         {add}
       </div>
       <DataTable caption="Academic calendar" columns={columns} rows={rows} empty={<EmptyState title="No dates yet" text="Add the first date for this academic session." action={add} />} />
-      {del && <ConfirmDialog title="Delete this date?" text={`“${del.title}” will be removed from the academic calendar.`} confirmLabel="Delete" danger onConfirm={() => { calendar.remove(del.id); toast('Deleted'); }} onClose={() => setDel(null)} />}
+      {del && <ConfirmDialog title="Delete this draft?" text={`“${del.title}” will be permanently removed.`} confirmLabel="Delete" danger onConfirm={async () => { if (await calendar.remove(del.id)) toast('Draft deleted'); setDel(null); }} onClose={() => setDel(null)} />}
       {viewing && <ItemDetailsDialog item={viewing} fields={[
         { label: 'Date', value: viewing.date ? new Intl.DateTimeFormat(undefined, { month: 'numeric', day: 'numeric', year: 'numeric' }).format(toDate(viewing.date)) : '—' },
         { label: 'Status', value: viewing.status },

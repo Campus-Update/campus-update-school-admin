@@ -22,9 +22,12 @@ export const clearAuth = () => {
 
 async function api(path, opts = {}) {
   const { auth = true, ...rest } = opts
-  const headers = { 'Content-Type': 'application/json', ...(rest.headers || {}) }
+  const multipart = typeof FormData !== 'undefined' && rest.body instanceof FormData
+  const headers = { ...(multipart ? {} : { 'Content-Type': 'application/json' }), ...(rest.headers || {}) }
+  if (multipart) delete headers['Content-Type']
   if (auth && getToken()) headers.Authorization = `Bearer ${getToken()}`
-  let res = await fetch(API_BASE + path, { ...rest, headers, body: rest.body ? JSON.stringify(rest.body) : undefined })
+  const requestBody = multipart ? rest.body : rest.body ? JSON.stringify(rest.body) : undefined
+  let res = await fetch(API_BASE + path, { ...rest, headers, body: requestBody })
   if (res.status === 401 && auth && localStorage.getItem(REFRESH_KEY)) {
     const rr = await fetch(API_BASE + '/api/v1/auth/refresh', {
       method: 'POST',
@@ -35,7 +38,7 @@ async function api(path, opts = {}) {
       const ra = await rr.json()
       setAuth(ra)
       headers.Authorization = `Bearer ${getToken()}`
-      res = await fetch(API_BASE + path, { ...rest, headers, body: rest.body ? JSON.stringify(rest.body) : undefined })
+      res = await fetch(API_BASE + path, { ...rest, headers, body: requestBody })
     } else {
       clearAuth()
       window.location.hash = '/login'
@@ -88,8 +91,11 @@ export const contentApi = {
 
 export const calendarApi = {
   list: () => api('/api/v1/calendar'),
+  manage: (institutionId) => api(qs('/api/v1/calendar/manage', { institutionId })),
   create: (b) => api('/api/v1/calendar', { method: 'POST', body: b }),
   update: (id, b) => api(`/api/v1/calendar/${id}`, { method: 'PUT', body: b }),
+  upload: (body) => api('/api/v1/calendar/upload', { method: 'POST', body }),
+  publish: (id) => api(`/api/v1/calendar/${id}/publish`, { method: 'POST' }),
   remove: (id) => api(`/api/v1/calendar/${id}`, { method: 'DELETE' }),
 }
 
