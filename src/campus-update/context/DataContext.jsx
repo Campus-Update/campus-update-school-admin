@@ -114,7 +114,8 @@ export function DataProvider({ children }) {
       .list()
       .then((rows) =>
         setCalendarRows(
-          (Array.isArray(rows) ? rows : []).map((c) => ({
+          // Contract §10: reads return a single calendar object (or 404), not an array.
+          (Array.isArray(rows) ? rows : rows && rows.id ? [rows] : []).map((c) => ({
             id: c.id,
             title: c.title,
             body: c.body || '',
@@ -277,7 +278,7 @@ export function DataProvider({ children }) {
         setCalendarRows((c) => [row, ...c]);
         if (r.status === 'Draft') return Promise.resolve(true);
         return calendarApi
-          .create({ institutionId: null, title: r.title, academicSession: r.category || 'General', imageUrl: 'https://campus-update.example/calendars/placeholder.png', publishedAt: new Date(`${r.date}T08:00:00Z`).toISOString(), isOfficial: true })
+          .create({ institutionId: acadRef.current.institutionId, title: r.title, academicSession: r.category || 'General', imageUrl: 'https://campus-update.example/calendars/placeholder.png', publishedAt: new Date(`${r.date}T08:00:00Z`).toISOString(), isOfficial: true })
           .then(() => true)
           .catch(() => {
             toast('Calendar API unavailable — saved on this device only.');
@@ -288,7 +289,7 @@ export function DataProvider({ children }) {
         setCalendarRows((c) => c.map((x) => (x.id === id ? { ...x, ...patch } : x)));
         const row = calendarRows.find((x) => x.id === id);
         if (row && String(row.id).length > 12) {
-          return calendarApi.update(id, { institutionId: null, title: (patch.title ?? row.title), academicSession: (patch.category ?? row.category) || 'General', imageUrl: 'https://campus-update.example/calendars/placeholder.png', publishedAt: new Date(`${patch.date ?? row.date}T08:00:00Z`).toISOString(), isOfficial: true }).then(() => true).catch(() => {
+          return calendarApi.update(id, { institutionId: acadRef.current.institutionId, title: (patch.title ?? row.title), academicSession: (patch.category ?? row.category) || 'General', imageUrl: 'https://campus-update.example/calendars/placeholder.png', publishedAt: new Date(`${patch.date ?? row.date}T08:00:00Z`).toISOString(), isOfficial: true }).then(() => true).catch(() => {
             toast('Calendar API unavailable — saved on this device only.');
             return true;
           });

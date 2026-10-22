@@ -228,7 +228,7 @@ export default function Events() {
           ? [{ label: 'Not yours to edit', disabled: true }]
           : [
             { label: 'View Details', icon: 'eye', dividerAfter: true, run: () => setViewing(r) },
-            { label: 'Edit', icon: 'edit', run: () => setEditing(r) },
+            ...(r.status === 'Live' ? [] : [{ label: 'Edit', icon: 'edit', run: () => setEditing(r) }]), // contract §9: Published is read-only
             ...(r.status === 'Draft' ? [{ label: 'Publish', icon: 'send', run: () => submitForApproval(r) }] : []),
             { label: 'Delete', icon: 'trash', run: () => setDel(r) },
           ]} />
