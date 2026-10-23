@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Icon } from '../components/Icons.jsx';
 import DataTable from '../components/DataTable.jsx';
 import RowMenu from '../components/RowMenu.jsx';
@@ -7,7 +7,98 @@ import ItemDetailsDialog from '../components/ItemDetailsDialog.jsx';
 import { StatusPill } from '../components/Pills.jsx';
 import { ConfirmDialog } from '../components/Modal.jsx';
 import { useData } from '../context/DataContext.jsx';
+import { CATEGORIES } from '../data/metrics.js';
 import { fmtShort, toDate } from '../lib/format.js';
+
+function CategoryDropdown({ value, onChange }) {
+  const id = useId();
+  const rootRef = useRef(null);
+  const triggerRef = useRef(null);
+  const optionRefs = useRef([]);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnOutsideClick = (event) => {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    return () => document.removeEventListener('mousedown', closeOnOutsideClick);
+  }, [open]);
+
+  const focusOption = (index) => optionRefs.current[index]?.focus();
+  const handleTriggerKeyDown = (event) => {
+    if (event.key === 'Escape' && open) {
+      event.preventDefault();
+      setOpen(false);
+    } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      setOpen(true);
+      requestAnimationFrame(() => focusOption(event.key === 'ArrowDown' ? 0 : CATEGORIES.length - 1));
+    }
+  };
+  const handleOptionKeyDown = (event, index) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setOpen(false);
+      triggerRef.current?.focus();
+    } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      focusOption((index + (event.key === 'ArrowDown' ? 1 : -1) + CATEGORIES.length) % CATEGORIES.length);
+    } else if (event.key === 'Home' || event.key === 'End') {
+      event.preventDefault();
+      focusOption(event.key === 'Home' ? 0 : CATEGORIES.length - 1);
+    }
+  };
+
+  return (
+    <div
+      className="schedule-field schedule-select-field"
+      ref={rootRef}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+    >
+      <span>Category</span>
+      <button
+        ref={triggerRef}
+        id={`${id}-trigger`}
+        type="button"
+        className="schedule-select-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={`${id}-options`}
+        onClick={() => setOpen((current) => !current)}
+        onKeyDown={handleTriggerKeyDown}
+      >
+        <span>{value === 'Public Holiday' ? 'Public holiday' : value}</span>
+        <Icon n="down" s={16} />
+      </button>
+      {open && (
+        <div id={`${id}-options`} className="schedule-select-menu" role="listbox" aria-label="Category">
+          {CATEGORIES.map((category, index) => (
+            <button
+              key={category}
+              ref={(element) => { optionRefs.current[index] = element; }}
+              type="button"
+              role="option"
+              aria-selected={value === category}
+              className="schedule-select-option"
+              onClick={() => {
+                onChange(category);
+                setOpen(false);
+                triggerRef.current?.focus();
+              }}
+              onKeyDown={(event) => handleOptionKeyDown(event, index)}
+            >
+              {category === 'Public Holiday' ? 'Public holiday' : category}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ScheduleEditor({ item, onBack, onSave }) {
   const editing = !!item;
@@ -15,48 +106,9 @@ function ScheduleEditor({ item, onBack, onSave }) {
     title: item?.title || '',
     date: item?.date || '',
     category: item?.category || 'Academic Session',
-    body: item?.body || '',
   });
-  const [image, setImage] = useState(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-  const bodyRef = useRef(null);
-  const imageRef = useRef(null);
-
-  const format = (before, after = before) => {
-    const input = bodyRef.current;
-    if (!input) return;
-    const start = input.selectionStart;
-    const end = input.selectionEnd;
-    const selected = schedule.body.slice(start, end);
-    const text = selected || 'text';
-    const replacement = `${before}${text}${after}`;
-    setSchedule((current) => ({ ...current, body: current.body.slice(0, start) + replacement + current.body.slice(end) }));
-    requestAnimationFrame(() => {
-      input.focus();
-      input.setSelectionRange(start + before.length, start + before.length + text.length);
-    });
-  };
-
-  const pickImage = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setError('Choose a JPG, PNG or WebP image.');
-      event.target.value = '';
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be 5MB or smaller.');
-      event.target.value = '';
-      return;
-    }
-    setError('');
-    const reader = new FileReader();
-    reader.onload = () => setImage({ name: file.name, src: reader.result, file });
-    reader.onerror = () => setError('Could not read this image. Try another file.');
-    reader.readAsDataURL(file);
-  };
 
   const submit = async (event) => {
     event.preventDefault();
@@ -69,25 +121,14 @@ function ScheduleEditor({ item, onBack, onSave }) {
       setError('Choose the schedule date.');
       return;
     }
-    if (action === 'approval' && !image?.file && !item?.imageUrl) {
-      setError('Upload a calendar image before publishing.');
-      return;
-    }
-    if (!editing && !schedule.body.trim()) {
-      setError('Write the schedule details before saving.');
-      bodyRef.current?.focus();
-      return;
-    }
-
     setError('');
     setSaving(true);
     const saved = await onSave({
       ...item,
       ...schedule,
       title: schedule.title.trim(),
-      body: schedule.body.trim(),
       status: action === 'approval' ? 'Live' : editing ? item.status : 'Draft',
-      imageFile: image?.file || null,
+      imageFile: null,
     });
     setSaving(false);
     if (saved !== false) onBack();
@@ -115,55 +156,11 @@ function ScheduleEditor({ item, onBack, onSave }) {
             <Icon n="calendar" s={16} w={1.7} c="#6b7280" />
           </div>
         </label>
-        <label className="schedule-field">
-          <span>Category</span>
-          <select value={schedule.category} onChange={(event) => setSchedule((current) => ({ ...current, category: event.target.value }))}>
-            {['Academic Session', 'Registration', 'Ceremony', 'Examinations', 'Public Holiday'].map((category) => <option key={category}>{category}</option>)}
-          </select>
-        </label>
-      </div>
-
-      <div className="schedule-content">
-        <div className="schedule-field schedule-body-field">
-          <label htmlFor="schedule-body">Schedule Body</label>
-          <div className="schedule-body">
-            <div className="schedule-format" role="toolbar" aria-label="Schedule formatting">
-              <button type="button" aria-label="Bold" onClick={() => format('**')}><b>B</b></button>
-              <button type="button" aria-label="Italic" onClick={() => format('*')}><i>I</i></button>
-              <button type="button" aria-label="Insert link" onClick={() => format('[', '](https://)')}><Icon n="link" s={15} /></button>
-              <button type="button" aria-label="Bulleted list" onClick={() => format('- ', '')}><Icon n="list" s={16} /></button>
-            </div>
-            <textarea
-              id="schedule-body"
-              ref={bodyRef}
-              rows={7}
-              value={schedule.body}
-              onChange={(event) => setSchedule((current) => ({ ...current, body: event.target.value }))}
-              placeholder="Write the full details of the schedule here..."
-              aria-invalid={!!error && !schedule.body.trim()}
-            />
-          </div>
-        </div>
-        <div className="schedule-upload">
-          <input ref={imageRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={pickImage} hidden />
-          {image ? (
-            <div className="schedule-image-preview">
-              <img src={image.src} alt="Selected schedule" />
-              <span>{image.name}</span>
-              <button type="button" onClick={() => { setImage(null); imageRef.current.value = ''; }}>Remove image</button>
-            </div>
-          ) : item?.imageUrl ? (
-            <div className="schedule-image-preview">
-              <img src={item.imageUrl} alt="Schedule" />
-            </div>
-          ) : (
-            <button type="button" className="schedule-upload-prompt" onClick={() => imageRef.current?.click()}>
-              <span className="schedule-upload-icon"><Icon n="upload" s={19} /></span>
-              <b>Upload your image here</b>
-              <small>Supports JPG, PNG or WebP. Max file size 5MB.</small>
-            </button>
-          )}
-        </div>
+        
+        <CategoryDropdown
+          value={schedule.category}
+          onChange={(category) => setSchedule((current) => ({ ...current, category }))}
+        />
       </div>
 
       {error && <p className="schedule-error" role="alert">{error}</p>}

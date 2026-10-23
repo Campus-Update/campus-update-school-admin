@@ -32,5 +32,5 @@ export const AUDIENCES = [
 export const CONTENT_TYPES = ['News', 'Announcement', 'Event'];
 export const PRIORITIES = ['Normal', 'Important', 'Urgent'];
 export const STATUSES = ['Live', 'Draft', 'Scheduled'];
-export const CATEGORIES = ['Academic Session', 'Registration', 'Ceremony', 'Examinations', 'Public Holiday'];
+export const CATEGORIES = ['Academic Session', 'Registration', 'Ceremony', 'Examinations', 'Public Holiday', 'Others'];
 export const ROLES = ['Institution administrator', 'Faculty administrator', 'Department administrator'];

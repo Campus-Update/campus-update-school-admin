@@ -25,7 +25,7 @@ const PAGE_COMPONENTS = {
 const TITLES = {
   news: ['News Announcements', 'Publish official announcements, research updates, and campus stories.'],
   events: ['Events', 'Schedule and manage academic events.'],
-  calendar: ['Calendar', 'The institution calendar at a glance.'],
+  calendar: ['Academic calendar', 'Only your institution can edit these dates.'],
   users: ['User Management', 'Manage students, staff and admin accounts.'],
   stats: ['Statistics', 'Institution performance and reach.'],
   settings: ['Settings', 'Institution and account configuration.'],

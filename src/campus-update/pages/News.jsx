@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Icon } from '../components/Icons.jsx';
 import DataTable from '../components/DataTable.jsx';
 import RowMenu from '../components/RowMenu.jsx';
@@ -10,7 +10,101 @@ import { ConfirmDialog } from '../components/Modal.jsx';
 import { useData } from '../context/DataContext.jsx';
 import { AUDIENCES, CONTENT_TYPES, STATUSES } from '../data/metrics.js';
 
-const ARTICLE_CATEGORIES = ['General', 'Academic', 'Campus Life', 'Research', 'Sports', 'Student Affairs'];
+const ARTICLE_CATEGORIES = ['General', 'Campus', 'Weather', 'Archived'];
+const ARTICLE_PRIORITIES = ['Normal', 'Important', 'Urgent'];
+
+function ArticleDropdown({ label, value, options, onChange }) {
+  const id = useId();
+  const rootRef = useRef(null);
+  const triggerRef = useRef(null);
+  const optionRefs = useRef([]);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnOutsideClick = (event) => {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    return () => document.removeEventListener('mousedown', closeOnOutsideClick);
+  }, [open]);
+
+  const focusOption = (index) => {
+    optionRefs.current[index]?.focus();
+  };
+  const handleTriggerKeyDown = (event) => {
+    if (event.key === 'Escape' && open) {
+      event.preventDefault();
+      setOpen(false);
+      return;
+    }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    event.preventDefault();
+    setOpen(true);
+    requestAnimationFrame(() => focusOption(event.key === 'ArrowDown' ? 0 : options.length - 1));
+  };
+  const handleOptionKeyDown = (event, index) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setOpen(false);
+      triggerRef.current?.focus();
+    } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      focusOption((index + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length);
+    } else if (event.key === 'Home' || event.key === 'End') {
+      event.preventDefault();
+      focusOption(event.key === 'Home' ? 0 : options.length - 1);
+    }
+  };
+
+  return (
+    <div
+      className="article-field article-select-field"
+      ref={rootRef}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+    >
+      <span>{label}</span>
+      <button
+        ref={triggerRef}
+        id={`${id}-trigger`}
+        type="button"
+        className="article-select-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={`${id}-options`}
+        onClick={() => setOpen((current) => !current)}
+        onKeyDown={handleTriggerKeyDown}
+      >
+        <span>{value}</span>
+        <Icon n="down" s={16} />
+      </button>
+      {open && (
+        <div id={`${id}-options`} className="article-select-menu" role="listbox" aria-label={label}>
+          {options.map((option, index) => (
+            <button
+              key={option}
+              ref={(element) => { optionRefs.current[index] = element; }}
+              type="button"
+              role="option"
+              aria-selected={value === option}
+              className="article-select-option"
+              onClick={() => {
+                onChange(option);
+                setOpen(false);
+                triggerRef.current?.focus();
+              }}
+              onKeyDown={(event) => handleOptionKeyDown(event, index)}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ArticleEditor({ item, onBack, onSave }) {
   const editing = !!item;
@@ -116,20 +210,18 @@ function ArticleEditor({ item, onBack, onSave }) {
             aria-invalid={!!error && article.title.trim().length < 3}
           />
         </label>
-        <label className="article-field">
-          <span>Category</span>
-          <select value={article.articleCategory} onChange={(event) => setArticle((current) => ({ ...current, articleCategory: event.target.value }))}>
-            {ARTICLE_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
-          </select>
-        </label>
-        <label className="article-field">
-          <span>Priority</span>
-          <select value={article.priority} onChange={(event) => setArticle((current) => ({ ...current, priority: event.target.value }))}>
-            <option value="Normal">Standard</option>
-            <option value="Important">Important</option>
-            <option value="Urgent">Urgent</option>
-          </select>
-        </label>
+        <ArticleDropdown
+          label="Category"
+          value={article.articleCategory}
+          options={ARTICLE_CATEGORIES}
+          onChange={(articleCategory) => setArticle((current) => ({ ...current, articleCategory }))}
+        />
+        <ArticleDropdown
+          label="Priority"
+          value={article.priority}
+          options={ARTICLE_PRIORITIES}
+          onChange={(priority) => setArticle((current) => ({ ...current, priority }))}
+        />
         <label className="article-field">
           <span>Audience</span>
           <select value={article.audience} onChange={(event) => setArticle((current) => ({ ...current, audience: event.target.value }))}>

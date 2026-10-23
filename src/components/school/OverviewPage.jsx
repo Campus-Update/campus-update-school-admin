@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Sidebar from './Sidebar.jsx'
 import Topbar from './Topbar.jsx'
+import EmergencyBroadcastDialog from './EmergencyBroadcastDialog.jsx'
 import {
   MegaphoneIcon,
   UserGroupIcon,
@@ -72,10 +73,10 @@ function StatCard({ title, value, sub, hero = false }) {
 }
 
 const QUICK_ACTIONS = [
-  { title: 'New Article', sub: 'Draft a standard news post', icon: NewsIcon, bg: '#EEEDFD', stroke: '#4F46E5' },
-  { title: 'Schedule Event', sub: 'Add to university calendar', icon: ClipboardIcon, bg: '#EEEDFD', stroke: '#4F46E5' },
-  { title: 'Manage News Announcement', sub: 'Create and manage alerts', icon: MegaphoneIcon, bg: '#FDECEC', stroke: '#DC2626' },
-  { title: 'View Users', sub: 'Manage system users', icon: UserGroupIcon, bg: '#E6F6F0', stroke: '#0F7B5F' },
+  { title: 'New Article', sub: 'Draft a standard news post', page: 'news', icon: NewsIcon, bg: '#EEEDFD', stroke: '#4F46E5' },
+  { title: 'Schedule Event', sub: 'Add to university calendar', page: 'events', icon: ClipboardIcon, bg: '#EEEDFD', stroke: '#4F46E5' },
+  { title: 'Manage News Announcement', sub: 'Create and manage alerts', page: 'news', icon: MegaphoneIcon, bg: '#FDECEC', stroke: '#DC2626' },
+  { title: 'View Users', sub: 'Manage system users', page: 'users', icon: UserGroupIcon, bg: '#E6F6F0', stroke: '#0F7B5F' },
 ]
 
 function ModuleThumb({ from, to }) {
@@ -121,7 +122,7 @@ function EmptyBox({ title }) {
 }
 
 export default function OverviewPage({ onNavigate, onLogout }) {
-  const { content, events, alerts } = useData()
+  const { content, events, alerts, institution } = useData()
   const ACTIVITY = content.rows.slice(0, 5).map((r) => ({
     title: r.title,
     meta: `${r.source} · ${relativeTime(r.updatedAt)}${r.push ? ' · push sent' : ''}`,
@@ -134,6 +135,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
   const publishedRows = content.rows.filter((r) => (r.publishedAt || '').slice(0, 7) === month)
   const countType = (t) => publishedRows.filter((r) => r.type === t).length
   const [navOpen, setNavOpen] = useState(false)
+  const [broadcastOpen, setBroadcastOpen] = useState(false)
   const hasActivity = ACTIVITY.length > 0
 
   return (
@@ -156,6 +158,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
               </div>
               <button
                 type="button"
+                onClick={() => setBroadcastOpen(true)}
                 className="flex h-[50px] w-full shrink-0 items-center justify-center gap-3 rounded-[10px] bg-gradient-to-b from-[#C4271C] to-[#7E150C] px-6 text-sm font-semibold leading-4 text-white hover:opacity-95 md:w-auto"
               >
                 <MegaphoneIcon className="h-5 w-5" stroke="#fff" />
@@ -226,7 +229,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
                 {QUICK_ACTIONS.map((a) => {
                   const Icon = a.icon
                   return (
-                    <button key={a.title} type="button" className="flex items-center gap-4 rounded-[10px] px-2 py-3 text-left hover:bg-[#FAFAFB]">
+                    <button key={a.title} type="button" onClick={() => onNavigate?.(a.page)} className="flex items-center gap-4 rounded-[10px] px-2 py-3 text-left hover:bg-[#FAFAFB]">
                       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px]" style={{ backgroundColor: a.bg }}>
                         <Icon className="h-5 w-5" stroke={a.stroke} />
                       </span>
@@ -296,6 +299,13 @@ export default function OverviewPage({ onNavigate, onLogout }) {
           </section>
         </main>
       </div>
+      {broadcastOpen && (
+        <EmergencyBroadcastDialog
+          institutionName={institution.name}
+          onClose={() => setBroadcastOpen(false)}
+          onSend={(alert) => alerts.add(alert)}
+        />
+      )}
     </div>
   )
 }
