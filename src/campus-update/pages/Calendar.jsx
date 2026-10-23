@@ -156,7 +156,7 @@ function ScheduleEditor({ item, onBack, onSave }) {
             <Icon n="calendar" s={16} w={1.7} c="#6b7280" />
           </div>
         </label>
-        
+
         <CategoryDropdown
           value={schedule.category}
           onChange={(category) => setSchedule((current) => ({ ...current, category }))}
