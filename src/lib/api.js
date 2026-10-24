@@ -99,6 +99,10 @@ export const calendarApi = {
   remove: (id) => api(`/api/v1/calendar/${id}`, { method: 'DELETE' }),
 }
 
+export const departmentsApi = {
+  list: () => api('/api/v1/departments'),
+}
+
 export const notificationsApi = {
   list: () => api('/api/v1/notifications'),
 }

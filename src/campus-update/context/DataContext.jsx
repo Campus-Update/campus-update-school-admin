@@ -5,7 +5,7 @@ import {
   DEFAULT_INSTITUTION, DEFAULT_PREFS, DEFAULT_PROFILE,
   makeAdmins, makeAlerts,
 } from '../data/seed.js';
-import { authApi, calendarApi, contentApi, schoolsApi } from '../../lib/api.js';
+import { authApi, calendarApi, contentApi, departmentsApi, schoolsApi } from '../../lib/api.js';
 
 const Ctx = createContext(null);
 export const useData = () => useContext(Ctx);
@@ -33,22 +33,29 @@ const fromApi = (it) => ({
   type: it.type,
   priority: it.urgency || 'Normal',
   source: it.sourceName || '—',
-  audience: it.category || 'All students',
+  audience: it.category || 'Entire institution',
   status: STATUS_FROM_API(it.status),
   createdAt: it.createdAt || null,
-  updatedAt: it.publishedAt,
+  updatedAt: it.updatedAt || it.publishedAt,
   publishedAt: it.publishedAt,
   scheduledFor: null,
   push: (it.notificationOpenCount || 0) > 0,
   reach: it.uniqueReachCount || 0,
   open: it.notificationOpenCount || 0,
   readSec: it.views || 0,
-  when: (it.publishedAt || '').slice(0, 16),
-  venue: it.category || '—',
+  when: (it.eventStartsAt || it.publishedAt || '').slice(0, 16),
+  venue: it.eventLocation || it.category || '—',
   saved: it.views || 0,
+  // Carry the real event/ad fields so edits round-trip them instead of wiping them.
+  eventEndsAt: it.eventEndsAt || null,
+  registrationUrl: it.registrationUrl || null,
+  sponsorName: it.sponsorName || null,
+  targetUrl: it.targetUrl || null,
 });
 
-const toApi = (r, withType, institutionId) => {
+const toApi = (r, withType, institutionId, audienceOpts) => {
+  // Map the selected audience label to its real academic-structure ids (GET /departments tree).
+  const opt = (audienceOpts || []).find((o) => o.label === (r.audience || 'Entire institution')) || {};
   const body = {
     title: r.title,
     body: r.body || r.title,
@@ -59,14 +66,14 @@ const toApi = (r, withType, institutionId) => {
     sourceType: 'Official',
     category: r.audience || null,
     eventStartsAt: r.when ? new Date(r.when).toISOString() : null,
-    eventEndsAt: null,
+    eventEndsAt: r.eventEndsAt || null,
     eventLocation: r.venue && r.venue !== '—' ? r.venue : null,
-    registrationUrl: null,
-    sponsorName: null,
-    targetUrl: null,
-    // Contract §9: audiences needs at least one entry; school admins always target their own institution.
+    registrationUrl: r.registrationUrl || null,
+    sponsorName: r.sponsorName || null,
+    targetUrl: r.targetUrl || null,
+    // Contract §9: audiences needs at least one entry; ids come from the picked audience.
     audiences: institutionId
-      ? [{ institutionId, facultyId: null, departmentId: null, programmeId: null, academicLevelId: null }]
+      ? [{ institutionId, facultyId: opt.facultyId || null, departmentId: opt.departmentId || null, programmeId: opt.programmeId || null, academicLevelId: opt.academicLevelId || null }]
       : [],
   };
   if (withType) body.type = r.type || 'News';
@@ -91,6 +98,8 @@ const ROLE_LABEL = { SchoolAdmin: 'Institution administrator', InstitutionAdmin:
 export function DataProvider({ children }) {
   const [items, setItems] = useState([]);
   const [contentError, setContentError] = useState('');
+  const [audienceOptions, setAudienceOptions] = useState([]);
+  const audienceRef = useRef([]);
   const [calendarRows, setCalendarRows] = useState([]);
   const [calendarError, setCalendarError] = useState(false);
   const admins = useLocalCollection('admins', makeAdmins);
@@ -135,6 +144,25 @@ export function DataProvider({ children }) {
           eventsEnabled: p.eventsEnabled,
           advertisementsEnabled: p.advertisementsEnabled,
         };
+        // Real academic tree → flat audience options (faculties → departments → programmes → levels).
+        departmentsApi
+          .list()
+          .then((depts) => {
+            const opts = [{ label: 'Entire institution' }];
+            const seenFac = new Set();
+            (Array.isArray(depts) ? depts : []).forEach((d) => {
+              if (d.facultyName && !seenFac.has(d.facultyId)) { seenFac.add(d.facultyId); opts.push({ label: d.facultyName, facultyId: d.facultyId }); }
+              opts.push({ label: d.name, facultyId: d.facultyId, departmentId: d.id });
+              (d.programmes || []).forEach((pr) => {
+                opts.push({ label: pr.name, facultyId: d.facultyId, departmentId: d.id, programmeId: pr.id });
+                (pr.levels || []).forEach((l) => opts.push({ label: `${pr.name} · ${l.name}`, facultyId: d.facultyId, departmentId: d.id, programmeId: pr.id, academicLevelId: l.id }));
+              });
+            });
+            const uniq = opts.filter((o, i) => opts.findIndex((x) => x.label === o.label) === i);
+            setAudienceOptions(uniq);
+            audienceRef.current = uniq;
+          })
+          .catch((e) => toast(`Audience options failed to load: ${e.message}`));
         if (p.institutionId) {
           calendarApi.manage(p.institutionId)
             .then((rows) => {
@@ -211,7 +239,7 @@ export function DataProvider({ children }) {
       error: contentError,
       add: (r) =>
         contentApi
-          .create(toApi({ ...r, type: r.type || 'News' }, true, acadRef.current.institutionId))
+          .create(toApi({ ...r, type: r.type || 'News' }, true, acadRef.current.institutionId, audienceRef.current))
           .then((created) => {
             const requestedStatus = STATUS_TO_API[r.status] || 'Draft';
             const applyStatus = requestedStatus === 'Draft'
@@ -231,7 +259,7 @@ export function DataProvider({ children }) {
         const next = { ...prev, ...patch };
         setItems((c) => c.map((x) => (x.id === id ? next : x)));
         return contentApi
-          .update(id, toApi(next, false, acadRef.current.institutionId))
+          .update(id, toApi(next, false, acadRef.current.institutionId, audienceRef.current))
           .then(() => (patch.status && patch.status !== prev?.status ? contentApi.setStatus(id, STATUS_TO_API[patch.status] || patch.status) : null))
           .then(() => true)
           .catch((e) => {
@@ -296,7 +324,7 @@ export function DataProvider({ children }) {
           institutionId,
           title: patch.title ?? row.title,
           academicSession: (patch.category ?? row.category) || 'General',
-          imageUrl: '',
+          imageUrl: row.imageUrl || '',
           publishedAt: new Date(`${patch.date ?? row.date}T08:00:00Z`).toISOString(),
           isOfficial: status === 'Published',
           status,
@@ -336,7 +364,7 @@ export function DataProvider({ children }) {
   );
 
   const value = {
-    content, events, calendar, admins, alerts,
+    content, events, calendar, admins, alerts, audienceOptions,
     profile, setProfile, institution, setInstitution, prefs, setPrefs,
     toast, toastMsg,
   };

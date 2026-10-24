@@ -107,6 +107,7 @@ function ArticleDropdown({ label, value, options, onChange }) {
 }
 
 function ArticleEditor({ item, onBack, onSave }) {
+  const { audienceOptions } = useData();
   const editing = !!item;
   const [article, setArticle] = useState(() => item ? ({
     ...item,
@@ -225,7 +226,7 @@ function ArticleEditor({ item, onBack, onSave }) {
         <label className="article-field">
           <span>Audience</span>
           <select value={article.audience} onChange={(event) => setArticle((current) => ({ ...current, audience: event.target.value }))}>
-            {AUDIENCES.map((audience) => <option key={audience}>{audience}</option>)}
+            {(audienceOptions.length ? audienceOptions.map((o) => o.label) : AUDIENCES).map((audience) => <option key={audience}>{audience}</option>)}
           </select>
         </label>
         <label className="article-field">
