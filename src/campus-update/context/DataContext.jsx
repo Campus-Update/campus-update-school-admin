@@ -5,7 +5,7 @@ import {
   DEFAULT_INSTITUTION, DEFAULT_PREFS, DEFAULT_PROFILE,
   makeAdmins, makeAlerts,
 } from '../data/seed.js';
-import { authApi, calendarApi, contentApi, departmentsApi, schoolsApi } from '../../lib/api.js';
+import { authApi, calendarApi, contentApi, departmentsApi, mediaApi, schoolsApi } from '../../lib/api.js';
 
 const Ctx = createContext(null);
 export const useData = () => useContext(Ctx);
@@ -240,7 +240,12 @@ export function DataProvider({ children }) {
       add: (r) =>
         contentApi
           .create(toApi({ ...r, type: r.type || 'News' }, true, acadRef.current.institutionId, audienceRef.current))
-          .then((created) => {
+          .then(async (created) => {
+            if (r.imageFile) {
+              const form = new FormData();
+              form.append('file', r.imageFile);
+              await mediaApi.content(created.id, form).catch((e) => toast(`Alert saved, but image upload failed: ${e.message}`));
+            }
             const requestedStatus = STATUS_TO_API[r.status] || 'Draft';
             const applyStatus = requestedStatus === 'Draft'
               ? Promise.resolve()
@@ -354,7 +359,14 @@ export function DataProvider({ children }) {
       },
       remove: async (id) => {
         try {
-          await calendarApi.remove(id);
+          await calendarApi.remove(id).catch(async (e) => {
+            // Published calendars reject DELETE (409): move back to Draft first, then delete.
+            if (e && e.status === 409) {
+              const row = calendarRows.find((x) => x.id === id);
+              await calendarApi.update(id, { institutionId: acadRef.current.institutionId, title: row?.title || '', academicSession: row?.category || 'General', imageUrl: row?.imageUrl || '', publishedAt: new Date().toISOString(), isOfficial: false, status: 'Draft' });
+              await calendarApi.remove(id);
+            } else throw e;
+          });
           setCalendarRows((rows) => rows.filter((x) => x.id !== id));
           return true;
         } catch (e) { toast(`Draft delete failed: ${e.message}`); return false; }

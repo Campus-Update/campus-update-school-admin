@@ -103,6 +103,10 @@ export const departmentsApi = {
   list: () => api('/api/v1/departments'),
 }
 
+export const mediaApi = {
+  content: (id, body) => api(`/api/v1/media/content/${id}`, { method: 'POST', body }),
+}
+
 export const notificationsApi = {
   list: () => api('/api/v1/notifications'),
 }

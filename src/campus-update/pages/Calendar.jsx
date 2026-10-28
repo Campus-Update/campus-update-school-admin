@@ -128,7 +128,7 @@ function ScheduleEditor({ item, onBack, onSave }) {
       ...schedule,
       title: schedule.title.trim(),
       status: action === 'approval' ? 'Live' : editing ? item.status : 'Draft',
-      imageFile: null,
+      imageFile: schedule.imageFile || null,
     });
     setSaving(false);
     if (saved !== false) onBack();
@@ -161,6 +161,19 @@ function ScheduleEditor({ item, onBack, onSave }) {
           value={schedule.category}
           onChange={(category) => setSchedule((current) => ({ ...current, category }))}
         />
+        <label className="schedule-field schedule-field-full">
+          <span>Calendar image (JPG/PNG — required before publishing)</span>
+          <input
+            type="file"
+            accept="image/png, image/jpeg"
+            onChange={(event) => setSchedule((current) => ({ ...current, imageFile: event.target.files?.[0] || null }))}
+          />
+          {schedule.imageFile ? (
+            <span className="muted-text">{schedule.imageFile.name}</span>
+          ) : editing && item?.imageUrl ? (
+            <span className="muted-text">Current image kept unless you pick a new one.</span>
+          ) : null}
+        </label>
       </div>
 
       {error && <p className="schedule-error" role="alert">{error}</p>}

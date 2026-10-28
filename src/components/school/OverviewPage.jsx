@@ -122,7 +122,28 @@ function EmptyBox({ title }) {
 }
 
 export default function OverviewPage({ onNavigate, onLogout }) {
-  const { content, events, alerts, institution } = useData()
+  const { content, events, institution, toast } = useData()
+
+  // Emergency broadcast = urgent Announcement submitted for approval (contract §4) + image via /media/content.
+  const broadcast = async (a) => {
+    let imageFile = null;
+    if (a.imageUrl) {
+      const blob = await fetch(a.imageUrl).then((r) => r.blob()).catch(() => null);
+      if (blob) imageFile = new File([blob], 'emergency-alert.jpg', { type: blob.type || 'image/jpeg' });
+    }
+    const ok = await content.add({
+      type: 'Announcement',
+      priority: 'Urgent',
+      title: a.title,
+      body: a.message,
+      audience: a.audience || 'Entire institution',
+      status: 'Pending',
+      imageFile,
+    });
+    if (!ok) throw new Error('Could not send the emergency alert. Try again.');
+    toast('Emergency alert submitted — it broadcasts once a platform admin approves it.');
+  };
+  const urgentAlert = content.rows.find((r) => r.priority === 'Urgent');
   const ACTIVITY = content.rows.slice(0, 5).map((r) => ({
     title: r.title,
     meta: `${r.source} · ${relativeTime(r.updatedAt)}${r.push ? ' · push sent' : ''}`,
@@ -287,8 +308,8 @@ export default function OverviewPage({ onNavigate, onLogout }) {
               <ModuleCard dot="#3B82F6" title="Emergency Broadcast">
                 <div className="flex items-center justify-between gap-3 rounded-[10px] bg-[#FAFAFB] px-4 py-3">
                   <span className="flex min-w-0 flex-col gap-1">
-                    <span className="truncate text-sm font-medium leading-4 text-[#17171B]">{alerts.rows[0]?.title || 'No alerts'}</span>
-                    <span className="truncate text-xs leading-3.5 text-[#9CA3AF]">{alerts.rows[0]?.message || 'Emergency broadcasts appear here.'}</span>
+                    <span className="truncate text-sm font-medium leading-4 text-[#17171B]">{urgentAlert?.title || 'No alerts'}</span>
+                    <span className="truncate text-xs leading-3.5 text-[#9CA3AF]">{urgentAlert ? `${urgentAlert.status === 'Pending' ? 'Waiting approval · ' : ''}${(urgentAlert.body || '').slice(0, 60)}` : 'Emergency broadcasts appear here.'}</span>
                   </span>
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FDECEC]">
                     <span className="h-2 w-2 rounded-full bg-[#DC2626]" />
@@ -303,7 +324,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
         <EmergencyBroadcastDialog
           institutionName={institution.name}
           onClose={() => setBroadcastOpen(false)}
-          onSend={(alert) => alerts.add(alert)}
+          onSend={broadcast}
         />
       )}
     </div>
