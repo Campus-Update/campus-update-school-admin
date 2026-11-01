@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { statsApi } from '../../lib/api.js'
 import Sidebar from './Sidebar.jsx'
 import Topbar from './Topbar.jsx'
 import EmergencyBroadcastDialog from './EmergencyBroadcastDialog.jsx'
@@ -92,7 +93,7 @@ function ModuleThumb({ from, to }) {
   )
 }
 
-function ModuleCard({ dot, title, children }) {
+function ModuleCard({ dot, title, children, onView }) {
   return (
     <div className="flex flex-col gap-4 rounded-[10px] border border-[#E7E7EA] bg-white p-4">
       <div className="flex items-center justify-between">
@@ -100,7 +101,7 @@ function ModuleCard({ dot, title, children }) {
           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: dot }} />
           {title}
         </span>
-        <button type="button" className="text-[13px] font-semibold leading-4 text-[#4F46E5]">View all</button>
+        <button type="button" className="text-[13px] font-semibold leading-4 text-[#4F46E5]" onClick={() => onView && onView()}>View all</button>
       </div>
       {children}
     </div>
@@ -122,7 +123,42 @@ function EmptyBox({ title }) {
 }
 
 export default function OverviewPage({ onNavigate, onLogout }) {
-  const { content, events, alerts, institution } = useData()
+  const [studentCount, setStudentCount] = useState(null);
+  const [staffCount, setStaffCount] = useState(null);
+  const [weeklyActive, setWeeklyActive] = useState(null);
+  useEffect(() => {
+    let live = true;
+    statsApi.registrationsByDepartment().then((rows) => {
+      if (!live) return;
+      const list = Array.isArray(rows) ? rows : [];
+      setStudentCount(list.reduce((a, r) => a + (r.studentRegistrations || 0), 0));
+      setStaffCount(list.reduce((a, r) => a + (r.staffRegistrations || 0), 0));
+    }).catch(() => {});
+    statsApi.weeklyActiveStudents().then((r) => { if (live && r) setWeeklyActive(r.activeStudentCount ?? null); }).catch(() => {});
+    return () => { live = false; };
+  }, []);
+  const { content, events, institution, toast } = useData()
+
+  // Emergency broadcast = urgent Announcement submitted for approval (contract §4) + image via /media/content.
+  const broadcast = async (a) => {
+    let imageFile = null;
+    if (a.imageUrl) {
+      const blob = await fetch(a.imageUrl).then((r) => r.blob()).catch(() => null);
+      if (blob) imageFile = new File([blob], 'emergency-alert.jpg', { type: blob.type || 'image/jpeg' });
+    }
+    const ok = await content.add({
+      type: 'Announcement',
+      priority: 'Urgent',
+      title: a.title,
+      body: a.message,
+      audience: a.audience || 'Entire institution',
+      status: 'Pending',
+      imageFile,
+    });
+    if (!ok) throw new Error('Could not send the emergency alert. Try again.');
+    toast('Emergency alert submitted — it broadcasts once a platform admin approves it.');
+  };
+  const urgentAlert = content.rows.find((r) => r.priority === 'Urgent');
   const ACTIVITY = content.rows.slice(0, 5).map((r) => ({
     title: r.title,
     meta: `${r.source} · ${relativeTime(r.updatedAt)}${r.push ? ' · push sent' : ''}`,
@@ -169,8 +205,8 @@ export default function OverviewPage({ onNavigate, onLogout }) {
 
           {/* Stats */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-4">
-            <StatCard hero title="Registered students" value="08" sub="+96 this week" />
-            <StatCard title="Registered staff" value="30" sub="+3 this week" />
+            <StatCard hero title="Registered students" value={studentCount ?? '—'} sub={weeklyActive == null ? 'Awaiting school metrics endpoint' : `${weeklyActive} students active this week`} />
+            <StatCard title="Registered staff" value={staffCount ?? '—'} sub={staffCount == null ? 'Awaiting school metrics endpoint' : 'Live from institution stats'} />
             <StatCard title="Published this month" value={String(publishedRows.length).padStart(2, '0')} sub={`${countType('News')} news · ${countType('Announcement')} announcements · ${countType('Event')} events`} />
             <StatCard title="Median time to read" value="N0.00" sub="From publish to first open" />
           </div>
@@ -180,7 +216,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
             <section className="flex flex-col gap-5 rounded-xl border border-[#E7E7EA] bg-white p-4 md:p-6 xl:col-span-2">
               <div className="flex items-center justify-between gap-4">
                 <h3 className="text-lg font-semibold leading-6 text-[#17171B]">Recent Activity</h3>
-                <button type="button" className="h-11 rounded-[10px] bg-[#4F46E5] px-6 text-sm font-semibold leading-4 text-white hover:bg-[#4338CA]">
+                <button type="button" onClick={() => onNavigate?.('news')} className="h-11 rounded-[10px] bg-[#4F46E5] px-6 text-sm font-semibold leading-4 text-white hover:bg-[#4338CA]">
                   View all
                 </button>
               </div>
@@ -201,7 +237,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
                       {ACTIVITY.map((r, i) => (
                         <tr key={i} className={`border-t border-[#EDEDF0] ${i % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFB]'}`}>
                           <td className="w-[38%] px-4 py-4">
-                            <button type="button" className="block truncate text-left text-[15px] font-semibold leading-5 text-[#4F46E5] hover:underline">
+                            <button type="button" onClick={() => onNavigate?.('news')} className="block truncate text-left text-[15px] font-semibold leading-5 text-[#4F46E5] hover:underline">
                               {r.title}
                             </button>
                             <span className="mt-1 block truncate text-[13px] leading-4 text-[#7B77F0]">{r.meta}</span>
@@ -249,10 +285,10 @@ export default function OverviewPage({ onNavigate, onLogout }) {
           <section className="flex flex-col gap-5 rounded-xl border border-[#E7E7EA] bg-white p-4 md:p-6">
             <div className="flex items-center justify-between gap-4">
               <h3 className="text-lg font-semibold leading-6 text-[#17171B]">Overview Modules</h3>
-              <button type="button" className="text-[13px] font-medium leading-4 text-[#4F46E5]">Real-time Firestore sync</button>
+              <span className="text-[13px] font-medium leading-4 text-[#4F46E5]">Real-time sync with the platform API</span>
             </div>
             <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-3">
-              <ModuleCard dot="#10B981" title="News Feed">
+              <ModuleCard dot="#10B981" title="News Feed" onView={() => onNavigate?.('news')}>
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-3">
                     <ModuleThumb from="#7C3AED" to="#F472B6" />
@@ -271,7 +307,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
                 </div>
               </ModuleCard>
 
-              <ModuleCard dot="#F59E0B" title="Academic Events">
+              <ModuleCard dot="#F59E0B" title="Academic Events" onView={() => onNavigate?.('events')}>
                 <div className="flex items-center justify-between gap-3 rounded-[10px] bg-[#FAFAFB] px-4 py-3">
                   <span className="flex min-w-0 flex-col gap-1">
                     <span className="truncate text-sm font-medium leading-4 text-[#17171B]">{events.rows[0]?.title || 'No events yet'}</span>
@@ -284,11 +320,11 @@ export default function OverviewPage({ onNavigate, onLogout }) {
                 </div>
               </ModuleCard>
 
-              <ModuleCard dot="#3B82F6" title="Emergency Broadcast">
+              <ModuleCard dot="#3B82F6" title="Emergency Broadcast" onView={() => onNavigate?.('news')}>
                 <div className="flex items-center justify-between gap-3 rounded-[10px] bg-[#FAFAFB] px-4 py-3">
                   <span className="flex min-w-0 flex-col gap-1">
-                    <span className="truncate text-sm font-medium leading-4 text-[#17171B]">{alerts.rows[0]?.title || 'No alerts'}</span>
-                    <span className="truncate text-xs leading-3.5 text-[#9CA3AF]">{alerts.rows[0]?.message || 'Emergency broadcasts appear here.'}</span>
+                    <span className="truncate text-sm font-medium leading-4 text-[#17171B]">{urgentAlert?.title || 'No alerts'}</span>
+                    <span className="truncate text-xs leading-3.5 text-[#9CA3AF]">{urgentAlert ? `${urgentAlert.status === 'Pending' ? 'Waiting approval · ' : ''}${(urgentAlert.body || '').slice(0, 60)}` : 'Emergency broadcasts appear here.'}</span>
                   </span>
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FDECEC]">
                     <span className="h-2 w-2 rounded-full bg-[#DC2626]" />
@@ -303,7 +339,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
         <EmergencyBroadcastDialog
           institutionName={institution.name}
           onClose={() => setBroadcastOpen(false)}
-          onSend={(alert) => alerts.add(alert)}
+          onSend={broadcast}
         />
       )}
     </div>

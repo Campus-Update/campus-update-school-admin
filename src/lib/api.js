@@ -72,6 +72,7 @@ export const authApi = {
   login: (email, password) => api('/api/v1/auth/login', { method: 'POST', body: { email, password }, auth: false }),
   profile: () => api('/api/v1/auth/profile'),
   updateProfile: (b) => api('/api/v1/auth/profile', { method: 'PUT', body: b }),
+  uploadPhoto: (body) => api('/api/v1/auth/profile/photo', { method: 'POST', body }),
   changePassword: (b) => api('/api/v1/auth/change-password', { method: 'POST', body: b }),
   sessions: () => api('/api/v1/auth/sessions'),
   updateAcademicSettings: (b) => api('/api/v1/auth/academic-settings', { method: 'PUT', body: b }),
@@ -83,7 +84,7 @@ export const schoolsApi = {
 
 export const contentApi = {
   list: (params) => api(qs('/api/v1/content', params)),
-  create: (b) => api('/api/v1/content', { method: 'POST', body: b }),
+  create: (b) => api('/api/v1/content/json', { method: 'POST', body: b }), // JSON route; /content is multipart-only now
   update: (id, b) => api(`/api/v1/content/${id}`, { method: 'PUT', body: b }),
   setStatus: (id, status) => api(`/api/v1/content/${id}/status`, { method: 'PATCH', body: { status } }),
   remove: (id) => api(`/api/v1/content/${id}`, { method: 'DELETE' }),
@@ -92,7 +93,10 @@ export const contentApi = {
 export const calendarApi = {
   list: () => api('/api/v1/calendar'),
   manage: (institutionId) => api(qs('/api/v1/calendar/manage', { institutionId })),
-  create: (b) => api('/api/v1/calendar', { method: 'POST', body: b }),
+  create: (b) => api('/api/v1/calendar/json', { method: 'POST', body: b }), // JSON route; /calendar is multipart-only now
+  media: (id, body) => api(`/api/v1/calendar/${id}/media`, { method: 'POST', body }),
+  submit: (id) => api(`/api/v1/calendar/${id}/submit`, { method: 'POST' }),
+  unpublish: (id) => api(`/api/v1/calendar/${id}/unpublish`, { method: 'POST' }),
   update: (id, b) => api(`/api/v1/calendar/${id}`, { method: 'PUT', body: b }),
   upload: (body) => api('/api/v1/calendar/upload', { method: 'POST', body }),
   publish: (id) => api(`/api/v1/calendar/${id}/publish`, { method: 'POST' }),
@@ -103,6 +107,24 @@ export const departmentsApi = {
   list: () => api('/api/v1/departments'),
 }
 
+export const mediaApi = {
+  content: (id, body) => api(`/api/v1/media/content/${id}`, { method: 'POST', body }),
+}
+
 export const notificationsApi = {
   list: () => api('/api/v1/notifications'),
+  read: (id) => api(`/api/v1/notifications/${id}/read`, { method: 'PATCH' }),
+  ack: (id) => api(`/api/v1/notifications/${id}/ack`, { method: 'POST' }),
 }
+
+// GET /institutions — list institutions visible to the token (school token sees its own row when allowed).
+export const institutionsApi = {
+  list: (params = {}) => api(qs('/api/v1/institutions', params)),
+  mine: async () => { const r = await api('/api/v1/institutions'); return Array.isArray(r) ? r : (r?.items || []); },
+};
+
+// Institution statistics (standup 01/11): school tokens are scoped to their own institution.
+export const statsApi = {
+  registrationsByDepartment: () => api('/api/v1/institution/stats/registrations-by-department'),
+  weeklyActiveStudents: () => api('/api/v1/institution/stats/weekly-active-students'),
+};

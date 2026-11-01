@@ -18,11 +18,13 @@ function EventEditor({ item, onBack, onSave }) {
   const editing = !!item;
   const [event, setEvent] = useState({
     title: item?.title || '',
+    priority: item?.priority || 'Normal',
     date: item?.when?.slice(0, 10) || '',
     time: item?.when?.slice(11, 16) || '',
     venue: item?.venue || '',
     body: item?.body || '',
   });
+  const [imageFile, setImageFile] = useState(null);
   const [image, setImage] = useState(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -58,7 +60,7 @@ function EventEditor({ item, onBack, onSave }) {
     }
     setError('');
     const reader = new FileReader();
-    reader.onload = () => setImage({ name: file.name, src: reader.result });
+    reader.onload = () => { setImage({ name: file.name, src: reader.result }); setImageFile(file); };
     reader.onerror = () => setError('Could not read this image. Try another file.');
     reader.readAsDataURL(file);
   };
@@ -99,6 +101,8 @@ function EventEditor({ item, onBack, onSave }) {
       body: event.body.trim(),
       type: item?.type || 'Official',
       status: action === 'approval' ? 'Pending' : editing ? item.status : 'Draft',
+      priority: event.priority,
+      imageFile,
     });
     setSaving(false);
     if (saved !== false) onBack();
@@ -145,6 +149,13 @@ function EventEditor({ item, onBack, onSave }) {
             aria-invalid={!!error && !event.venue.trim()}
           />
         </label>
+
+        <label className="event-field">
+          <span>Priority</span>
+          <select value={event.priority} onChange={(e) => setEvent((current) => ({ ...current, priority: e.target.value }))}>
+            {['Urgent', 'Important', 'Normal'].map((pr) => <option key={pr}>{pr}</option>)}
+          </select>
+        </label>
       </div>
 
       <div className="event-content">
@@ -175,7 +186,7 @@ function EventEditor({ item, onBack, onSave }) {
             <div className="event-image-preview">
               <img src={image.src} alt="Selected event" />
               <span>{image.name}</span>
-              <button type="button" onClick={() => { setImage(null); imageRef.current.value = ''; }}>Remove image</button>
+              <button type="button" onClick={() => { setImage(null); setImageFile(null); imageRef.current.value = ''; }}>Remove image</button>
             </div>
           ) : item?.imageUrl ? (
             <div className="event-image-preview">

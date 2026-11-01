@@ -128,7 +128,7 @@ function ScheduleEditor({ item, onBack, onSave }) {
       ...schedule,
       title: schedule.title.trim(),
       status: action === 'approval' ? 'Live' : editing ? item.status : 'Draft',
-      imageFile: null,
+      imageFile: schedule.imageFile || null,
     });
     setSaving(false);
     if (saved !== false) onBack();
@@ -161,6 +161,19 @@ function ScheduleEditor({ item, onBack, onSave }) {
           value={schedule.category}
           onChange={(category) => setSchedule((current) => ({ ...current, category }))}
         />
+        <label className="schedule-field schedule-field-full">
+          <span>Calendar image (JPG/PNG — required before publishing)</span>
+          <input
+            type="file"
+            accept="image/png, image/jpeg"
+            onChange={(event) => setSchedule((current) => ({ ...current, imageFile: event.target.files?.[0] || null }))}
+          />
+          {schedule.imageFile ? (
+            <span className="muted-text">{schedule.imageFile.name}</span>
+          ) : editing && item?.imageUrl ? (
+            <span className="muted-text">Current image kept unless you pick a new one.</span>
+          ) : null}
+        </label>
       </div>
 
       {error && <p className="schedule-error" role="alert">{error}</p>}
@@ -190,9 +203,13 @@ export default function Calendar() {
       render: (r) => (
         <RowMenu label={r.title} items={[
           { label: 'View Details', icon: 'eye', dividerAfter: true, run: () => setViewing(r) },
-          { label: 'Edit', icon: 'edit', run: () => setEditing(r) },
           ...(r.status === 'Draft' ? [
-            { label: 'Publish', icon: 'send', run: async () => { const ok = await calendar.update(r.id, { status: 'Live' }); if (ok) toast('Published'); } },
+            { label: 'Edit', icon: 'edit', run: () => setEditing(r) },
+            { label: 'Submit for approval', icon: 'send', run: () => calendar.submitRow(r.id) },
+            { label: 'Delete', icon: 'trash', run: () => setDel(r) },
+          ] : []),
+          ...(r.status === 'Live' ? [
+            { label: 'Unpublish', icon: 'edit', run: () => calendar.unpublish(r.id) },
             { label: 'Delete', icon: 'trash', run: () => setDel(r) },
           ] : []),
         ]} />

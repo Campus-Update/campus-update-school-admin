@@ -124,6 +124,7 @@ function ArticleEditor({ item, onBack, onSave }) {
     push: 'Standard',
     body: '',
   }));
+  const [imageFile, setImageFile] = useState(null);
   const [image, setImage] = useState(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -159,7 +160,7 @@ function ArticleEditor({ item, onBack, onSave }) {
     }
     setError('');
     const reader = new FileReader();
-    reader.onload = () => setImage({ name: file.name, src: reader.result });
+    reader.onload = () => { setImage({ name: file.name, src: reader.result }); setImageFile(file); };
     reader.onerror = () => setError('Could not read this image. Try another file.');
     reader.readAsDataURL(file);
   };
@@ -189,6 +190,7 @@ function ArticleEditor({ item, onBack, onSave }) {
       body: article.body.trim(),
       status: action === 'approval' ? 'Pending' : (item?.status || 'Draft'),
       source: article.source || 'Institution',
+      imageFile,
     });
     setSaving(false);
     if (saved) onBack();
@@ -265,7 +267,7 @@ function ArticleEditor({ item, onBack, onSave }) {
             <div className="article-image-preview">
               <img src={image.src} alt="Selected article" />
               <span>{image.name}</span>
-              <button type="button" onClick={() => { setImage(null); imageRef.current.value = ''; }}>Remove image</button>
+              <button type="button" onClick={() => { setImage(null); setImageFile(null); imageRef.current.value = ''; }}>Remove image</button>
             </div>
           ) : item?.imageUrl ? (
             <div className="article-image-preview">

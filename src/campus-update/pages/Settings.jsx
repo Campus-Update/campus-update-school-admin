@@ -30,6 +30,11 @@ function ProfileTab() {
     const reader = new FileReader();
     reader.onload = () => setF((s) => ({ ...s, photo: reader.result }));
     reader.readAsDataURL(img);
+    const form = new FormData();
+    form.append('file', img);
+    authApi.uploadPhoto(form)
+      .then((updated) => { setProfile({ ...profile, first: updated.firstName || profile.first, last: updated.lastName || profile.last, profileImageUrl: updated.profileImageUrl || null }); toast('Profile photo updated.'); })
+      .catch((e) => toast(`Photo upload failed: ${e.message}`));
   };
 
   const submit = (e) => {
