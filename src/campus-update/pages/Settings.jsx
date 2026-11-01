@@ -35,12 +35,15 @@ function ProfileTab() {
   const submit = (e) => {
     e.preventDefault();
     const errs = {};
-    if (!f.first.trim()) errs.first = 'Enter your first name.';
-    if (!f.last.trim()) errs.last = 'Enter your last name.';
-    if (!/^\+?[\d\s()-]{7,20}$/.test(f.phone.trim())) errs.phone = 'Enter a valid phone number.';
+    const first = (f.first ?? '').trim();
+    const last = (f.last ?? '').trim();
+    const phone = (f.phone ?? '').trim();
+    if (!first) errs.first = 'Enter your first name.';
+    if (!last) errs.last = 'Enter your last name.';
+    if (!/^\+?[\d\s()-]{7,20}$/.test(phone)) errs.phone = 'Enter a valid phone number.';
     setErrors(errs);
     if (Object.keys(errs).length) return requestAnimationFrame(() => document.querySelector('.set-card [aria-invalid="true"]')?.focus());
-    setProfile({ ...f, first: f.first.trim(), last: f.last.trim(), phone: f.phone.trim() });
+    setProfile({ ...f, first, last, phone });
     toast('Changes saved');
   };
 
@@ -88,20 +91,27 @@ function InstitutionTab() {
   const submit = (e) => {
     e.preventDefault();
     const errs = {};
-    if (!f.name.trim()) errs.name = 'Enter your institution’s name.';
-    if (f.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.contactEmail.trim())) errs.contactEmail = 'Enter a valid email address.';
-    if (f.replyTo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.replyTo.trim())) errs.replyTo = 'Enter a valid email address.';
+    const name = (f.name ?? '').trim();
+    const contactEmail = (f.contactEmail ?? '').trim();
+    const replyTo = (f.replyTo ?? '').trim();
+    const industry = (f.industry ?? '').trim();
+    const address = (f.address ?? '').trim();
+    const phone = (f.phone ?? '').trim();
+    const publisherName = (f.publisherName ?? '').trim();
+    if (!name) errs.name = 'Enter your institution’s name.';
+    if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) errs.contactEmail = 'Enter a valid email address.';
+    if (replyTo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyTo)) errs.replyTo = 'Enter a valid email address.';
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setInstitution({
       ...f,
-      name: f.name.trim(),
-      industry: f.industry.trim(),
-      address: f.address.trim(),
-      contactEmail: f.contactEmail.trim(),
-      phone: f.phone.trim(),
-      publisherName: f.publisherName.trim(),
-      replyTo: f.replyTo.trim(),
+      name,
+      industry,
+      address,
+      contactEmail,
+      phone,
+      publisherName,
+      replyTo,
     });
     toast('Changes saved');
   };

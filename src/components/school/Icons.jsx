@@ -1,16 +1,7 @@
 const S = { fill: 'none', strokeLinecap: 'round', strokeLinejoin: 'round' }
 
 export const LogoMark = ({ className = 'h-[38px] w-8' }) => (
-  <svg viewBox="0 0 32 38" className={className} aria-hidden="true">
-    <path
-      d="M20.6 13.4c-1.5-1.4-3.4-2.2-5.5-2.1-4.2.1-7.6 3.6-7.6 7.9 0 4.3 3.4 7.8 7.6 7.9 2.1.1 4-.7 5.5-2.1"
-      fill="none"
-      stroke="#4F46E5"
-      strokeWidth="5.5"
-      strokeLinecap="round"
-    />
-    <path d="M4 2.5h24a2 2 0 0 1 0 4H4a2 2 0 0 1 0-4Z" fill="#4F46E5" />
-  </svg>
+  <img src="/campus-update-mark.png" className={className} alt="" aria-hidden="true" />
 )
 
 export const UniversityIcon = ({ className = 'h-[18px] w-[18px]' }) => (

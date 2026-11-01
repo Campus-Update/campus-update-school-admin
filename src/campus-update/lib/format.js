@@ -4,34 +4,39 @@ export const pad = (n) => String(n).padStart(2, '0');
 
 /** Parses ISO strings, "YYYY-MM-DD" (as local date) and "YYYY-MM-DDTHH:mm" (as local time). */
 export function toDate(v) {
+  if (v == null || v === '') return new Date(NaN);
   if (v instanceof Date) return v;
   if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
     const [y, m, d] = v.split('-').map(Number);
     return new Date(y, m - 1, d);
   }
-  return new Date(v);
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? new Date(NaN) : d;
 }
+
+const isValidDate = (d) => d instanceof Date && !Number.isNaN(d.getTime());
 
 /** "18 Sep" */
 export const fmtShort = (v) => {
   const d = toDate(v);
-  return `${pad(d.getDate())} ${MON[d.getMonth()]}`;
+  return isValidDate(d) ? `${pad(d.getDate())} ${MON[d.getMonth()]}` : '—';
 };
 /** "8 May 2026" */
 export const fmtDate = (v) => {
   const d = toDate(v);
-  return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`;
+  return isValidDate(d) ? `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}` : '—';
 };
 /** "8 May 2026, 10:00am" */
 export const fmtDateTime = (v) => {
   const d = toDate(v);
+  if (!isValidDate(d)) return '—';
   const h = d.getHours();
   return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}, ${h % 12 || 12}:${pad(d.getMinutes())}${h < 12 ? 'am' : 'pm'}`;
 };
 /** "Sun, 11 Oct 2026" */
 export const fmtToday = (v = new Date()) => {
   const d = toDate(v);
-  return `${WD[d.getDay()]}, ${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`;
+  return isValidDate(d) ? `${WD[d.getDay()]}, ${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}` : '—';
 };
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
@@ -40,6 +45,7 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 export function relativeTime(v, now = Date.now()) {
   if (!v) return 'Never';
   const d = toDate(v);
+  if (!isValidDate(d)) return 'Never';
   const min = Math.floor((now - d.getTime()) / 60000);
   if (min < 1) return 'Just now';
   if (min < 60) return `${min} min ago`;
@@ -66,8 +72,8 @@ export function initials(name = '') {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export function median(nums) {
-  if (!nums.length) return null;
+export function median(nums = []) {
+  if (!Array.isArray(nums) || !nums.length) return null;
   const s = [...nums].sort((a, b) => a - b);
   const m = Math.floor(s.length / 2);
   return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
@@ -83,5 +89,5 @@ export function fmtDuration(sec) {
 
 export const fmtNum = (n) => Number(n).toLocaleString('en-US');
 export const pluralize = plural;
-export const nextId = (rows) => rows.reduce((m, r) => Math.max(m, r.id), 0) + 1;
+export const nextId = (rows = []) => rows.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
 export const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);

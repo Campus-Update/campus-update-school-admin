@@ -140,7 +140,7 @@ export function AdminModal({ item, existing, institutionName, onClose, onSave })
       name: `${s.firstName.trim()} ${s.lastName.trim()}`,
       email: s.email.trim(),
       role: s.role,
-      scope: s.scope.trim(),
+      scope: (s.scope ?? '').trim(),
       status: s.status,
       lastActive: s.lastActive,
     }),

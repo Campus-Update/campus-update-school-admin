@@ -92,7 +92,7 @@ function ModuleThumb({ from, to }) {
   )
 }
 
-function ModuleCard({ dot, title, children }) {
+function ModuleCard({ dot, title, page, onNavigate, children }) {
   return (
     <div className="flex flex-col gap-4 rounded-[10px] border border-[#E7E7EA] bg-white p-4">
       <div className="flex items-center justify-between">
@@ -100,7 +100,7 @@ function ModuleCard({ dot, title, children }) {
           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: dot }} />
           {title}
         </span>
-        <button type="button" className="text-[13px] font-semibold leading-4 text-[#4F46E5]">View all</button>
+        <button type="button" onClick={() => onNavigate?.(page)} className="text-[13px] font-semibold leading-4 text-[#4F46E5]">View all</button>
       </div>
       {children}
     </div>
@@ -165,7 +165,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
         <Sidebar active="overview" onNavigate={onNavigate} onLogout={onLogout} open={navOpen} onClose={() => setNavOpen(false)} />
 
         <main className="flex min-w-0 flex-1 flex-col gap-4 md:gap-6">
-          <Topbar title="Overview" subtitle="Manage operations, users, and system configuration." onMenu={() => setNavOpen(true)} />
+          <Topbar title="Overview" subtitle="Manage operations, users, and system configuration." onMenu={() => setNavOpen(true)} onNavigate={onNavigate} onLogout={onLogout} />
 
           {/* Greeting + emergency alert */}
           <div className="flex flex-col gap-4 md:gap-5">
@@ -201,34 +201,34 @@ export default function OverviewPage({ onNavigate, onLogout }) {
             <section className="flex flex-col gap-5 rounded-xl border border-[#E7E7EA] bg-white p-4 md:p-6 xl:col-span-2">
               <div className="flex items-center justify-between gap-4">
                 <h3 className="text-lg font-semibold leading-6 text-[#17171B]">Recent Activity</h3>
-                <button type="button" className="h-11 rounded-[10px] bg-[#4F46E5] px-6 text-sm font-semibold leading-4 text-white hover:bg-[#4338CA]">
+                <button type="button" onClick={() => onNavigate?.('news')} className="h-11 rounded-[10px] bg-[#4F46E5] px-6 text-sm font-semibold leading-4 text-white hover:bg-[#4338CA]">
                   View all
                 </button>
               </div>
               {hasActivity ? (
                 <div className="overflow-x-auto rounded-[10px] border border-[#EDEDF0]">
-                  <table className="w-full min-w-[760px] table-fixed border-collapse">
+                  <table className="w-full min-w-[900px] table-fixed border-collapse">
                     <thead>
                       <tr>
-                        <TH sort className="w-[36%]">CONTENT</TH>
+                        <TH sort className="w-[38%]">CONTENT</TH>
                         <TH sort className="w-[13%]">TYPE</TH>
-                        <TH sort className="w-[20%]">AUDIENCE</TH>
-                        <TH sort className="w-[10%]">REACH</TH>
-                        <TH sort className="w-[11%]">OPENED</TH>
+                        <TH sort className="w-[21%]">AUDIENCE</TH>
+                        <TH sort className="w-[9%]">REACH</TH>
+                        <TH sort className="w-[9%]">OPENED</TH>
                         <TH className="w-[10%]">ACTION</TH>
                       </tr>
                     </thead>
                     <tbody>
                       {ACTIVITY.map((r, i) => (
                         <tr key={i} className={`border-t border-[#EDEDF0] ${i % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFB]'}`}>
-                          <td className="w-[38%] px-4 py-4">
-                            <button type="button" className="block truncate text-left text-[15px] font-semibold leading-5 text-[#4F46E5] hover:underline">
+                          <td className="w-[38%] max-w-0 px-4 py-4">
+                            <button type="button" title={r.title} onClick={() => onNavigate?.('news')} className="block w-full truncate text-left text-[15px] font-semibold leading-5 text-[#4F46E5] hover:underline">
                               {r.title}
                             </button>
                             <span className="mt-1 block truncate text-[13px] leading-4 text-[#7B77F0]">{r.meta}</span>
                           </td>
                           <td className="w-[13%] px-4 py-4"><TypePill type={r.type} /></td>
-                          <td className="w-[21%] px-4 py-4 text-[13px] leading-4 text-[#3F3F46]">{r.audience}</td>
+                          <td className="w-[21%] max-w-0 truncate px-4 py-4 text-[13px] leading-4 text-[#3F3F46]" title={r.audience}>{r.audience}</td>
                           <td className="w-[9%] px-4 py-4 text-[13px] font-medium leading-4 text-[#17171B]">{r.reach}</td>
                           <td className="w-[9%] px-4 py-4 text-[13px] leading-4 text-[#3F3F46]">{r.opened}</td>
                           <td className="w-[10%] px-4 py-4">
@@ -273,7 +273,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
               <button type="button" className="text-[13px] font-medium leading-4 text-[#4F46E5]">Real-time Firestore sync</button>
             </div>
             <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-3">
-              <ModuleCard dot="#10B981" title="News Feed">
+              <ModuleCard dot="#10B981" title="News Feed" page="news" onNavigate={onNavigate}>
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-3">
                     <ModuleThumb from="#7C3AED" to="#F472B6" />
@@ -292,7 +292,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
                 </div>
               </ModuleCard>
 
-              <ModuleCard dot="#F59E0B" title="Academic Events">
+              <ModuleCard dot="#F59E0B" title="Academic Events" page="events" onNavigate={onNavigate}>
                 <div className="flex items-center justify-between gap-3 rounded-[10px] bg-[#FAFAFB] px-4 py-3">
                   <span className="flex min-w-0 flex-col gap-1">
                     <span className="truncate text-sm font-medium leading-4 text-[#17171B]">{events.rows[0]?.title || 'No events yet'}</span>
@@ -305,7 +305,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
                 </div>
               </ModuleCard>
 
-              <ModuleCard dot="#3B82F6" title="Emergency Broadcast">
+              <ModuleCard dot="#3B82F6" title="Emergency Broadcast" page="news" onNavigate={onNavigate}>
                 <div className="flex items-center justify-between gap-3 rounded-[10px] bg-[#FAFAFB] px-4 py-3">
                   <span className="flex min-w-0 flex-col gap-1">
                     <span className="truncate text-sm font-medium leading-4 text-[#17171B]">{urgentAlert?.title || 'No alerts'}</span>
