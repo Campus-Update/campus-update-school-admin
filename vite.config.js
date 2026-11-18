@@ -9,7 +9,7 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'https://campus-update-api-staging.vercel.app',
+        target: 'https://campus-update-api-staging-182508374043.us-east1.run.app',
         changeOrigin: true,
       },
     },

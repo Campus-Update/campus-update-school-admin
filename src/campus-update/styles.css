@@ -234,22 +234,6 @@
 .source-page .notification-group .row-sw small { display: block; font-size: 11.5px; }
 .source-page .notification-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
 .source-page .notification-actions .btn { height: 34px; font-size: 12px; }
-.source-page .notifications-page { max-width: 900px; }
-.source-page .notifications-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
-.source-page .notifications-heading h2 { font-size: 18px; font-weight: 600; }
-.source-page .notifications-heading p { margin-top: 5px; color: var(--muted); font-size: 13px; }
-.source-page .notifications-state,.source-page .notifications-error { padding: 18px 0; color: var(--muted); font-size: 13px; }
-.source-page .notifications-error { color: #b42318; }
-.source-page .notifications-list { list-style: none; border-top: 1px solid var(--line-soft); }
-.source-page .notifications-item { display: flex; align-items: flex-start; gap: 14px; padding: 18px 4px; border-bottom: 1px solid var(--line-soft); }
-.source-page .notifications-dot { width: 9px; height: 9px; flex: none; margin-top: 6px; border-radius: 50%; background: #d4d4d8; }
-.source-page .notifications-dot.unread { background: var(--primary); }
-.source-page .notifications-copy { min-width: 0; flex: 1; }
-.source-page .notifications-item-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.source-page .notifications-item-heading h3 { font-size: 14px; font-weight: 600; }
-.source-page .notifications-unread { border-radius: 999px; padding: 3px 8px; background: #eeedfd; color: var(--primary-ink); font-size: 11px; }
-.source-page .notifications-copy p { margin-top: 5px; color: #52525b; font-size: 13px; line-height: 1.45; }
-.source-page .notifications-copy time { display: block; margin-top: 7px; color: #85888f; font-size: 11px; }
 .source-page .security-password .sub,.source-page .login-activity .sub { font-size: 12px; }
 .source-page .security-fields { margin-top: 16px; gap: 12px; }
 .source-page .security-fields .fld label { font-size: 11px; }

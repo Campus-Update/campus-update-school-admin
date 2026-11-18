@@ -40,15 +40,12 @@ function ProfileTab() {
   const submit = (e) => {
     e.preventDefault();
     const errs = {};
-    const first = (f.first ?? '').trim();
-    const last = (f.last ?? '').trim();
-    const phone = (f.phone ?? '').trim();
-    if (!first) errs.first = 'Enter your first name.';
-    if (!last) errs.last = 'Enter your last name.';
-    if (!/^\+?[\d\s()-]{7,20}$/.test(phone)) errs.phone = 'Enter a valid phone number.';
+    if (!f.first.trim()) errs.first = 'Enter your first name.';
+    if (!f.last.trim()) errs.last = 'Enter your last name.';
+    if (!/^\+?[\d\s()-]{7,20}$/.test(f.phone.trim())) errs.phone = 'Enter a valid phone number.';
     setErrors(errs);
     if (Object.keys(errs).length) return requestAnimationFrame(() => document.querySelector('.set-card [aria-invalid="true"]')?.focus());
-    setProfile({ ...f, first, last, phone });
+    setProfile({ ...f, first: f.first.trim(), last: f.last.trim(), phone: f.phone.trim() });
     toast('Changes saved');
   };
 
@@ -96,27 +93,20 @@ function InstitutionTab() {
   const submit = (e) => {
     e.preventDefault();
     const errs = {};
-    const name = (f.name ?? '').trim();
-    const contactEmail = (f.contactEmail ?? '').trim();
-    const replyTo = (f.replyTo ?? '').trim();
-    const industry = (f.industry ?? '').trim();
-    const address = (f.address ?? '').trim();
-    const phone = (f.phone ?? '').trim();
-    const publisherName = (f.publisherName ?? '').trim();
-    if (!name) errs.name = 'Enter your institution’s name.';
-    if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) errs.contactEmail = 'Enter a valid email address.';
-    if (replyTo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyTo)) errs.replyTo = 'Enter a valid email address.';
+    if (!f.name.trim()) errs.name = 'Enter your institution’s name.';
+    if (f.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.contactEmail.trim())) errs.contactEmail = 'Enter a valid email address.';
+    if (f.replyTo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.replyTo.trim())) errs.replyTo = 'Enter a valid email address.';
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setInstitution({
       ...f,
-      name,
-      industry,
-      address,
-      contactEmail,
-      phone,
-      publisherName,
-      replyTo,
+      name: f.name.trim(),
+      industry: f.industry.trim(),
+      address: f.address.trim(),
+      contactEmail: f.contactEmail.trim(),
+      phone: f.phone.trim(),
+      publisherName: f.publisherName.trim(),
+      replyTo: f.replyTo.trim(),
     });
     toast('Changes saved');
   };
@@ -193,31 +183,36 @@ const Switch = ({ on, set, title, text }) => (
 );
 
 function NotificationsTab() {
-  const { prefs, setPrefs, toast } = useData();
-  const initial = {
-    urgentAdmin: prefs.urgentAdmin ?? prefs.urgent ?? true,
-    adminChanges: prefs.adminChanges ?? true,
-    draftsReminder: prefs.draftsReminder ?? true,
-    contentRemoved: prefs.contentRemoved ?? false,
-    newDevice: prefs.newDevice ?? true,
-    push: prefs.push ?? true,
-  };
-  const [n, setN] = useState(initial);
+  const { toast } = useData();
+  const [n, setN] = useState(null);
+  useEffect(() => {
+    let live = true;
+    authApi.notificationPreferences()
+      .then((p) => { if (live) setN({ email: !!p.emailNotificationsEnabled, push: !!p.pushNotificationsEnabled, cadence: p.summaryCadence || 'Weekly' }); })
+      .catch(() => { if (live) setN({ email: true, push: true, cadence: 'Weekly' }); });
+    return () => { live = false; };
+  }, []);
+  if (!n) return <p className="sub">Loading preferences…</p>;
   return (
-    <form onSubmit={(e) => { e.preventDefault(); setPrefs({ ...prefs, ...n, urgent: n.urgentAdmin }); toast('Preferences saved'); }}>
+    <form onSubmit={(e) => { e.preventDefault(); authApi.saveNotificationPreferences({ emailNotificationsEnabled: n.email, pushNotificationsEnabled: n.push, summaryCadence: n.cadence }).then(() => toast('Preferences saved')).catch((err) => toast(`Save failed: ${err.message}`)); }}>
       <h2>Notification Preferences</h2>
       <p className="sub">Configure when and where you receive notifications.</p>
       <section className="notification-group">
         <h3>EMAIL NOTIFICATIONS</h3>
-        <Switch on={n.urgentAdmin} set={(v) => setN({ ...n, urgentAdmin: v })} title="Urgent notices from other administrators" text="So you hear about a change before students ask you." />
-        <Switch on={n.adminChanges} set={(v) => setN({ ...n, adminChanges: v })} title="Administrator added, removed or rescoped" text="Changes to who can publish for your institution." />
-        <Switch on={n.draftsReminder} set={(v) => setN({ ...n, draftsReminder: v })} title="Drafts left unpublished for 2 days" text="A reminder for drafts you started." />
-        <Switch on={n.contentRemoved} set={(v) => setN({ ...n, contentRemoved: v })} title="Campus Update takes down your content" text="Includes the reason. Email is always sent." />
-        <Switch on={n.newDevice} set={(v) => setN({ ...n, newDevice: v })} title="Sign-in from a new device" text="Email is always sent." />
+        <Switch on={n.email} set={(v) => setN({ ...n, email: v })} title="Email notifications" text="Receive platform updates by email." />
       </section>
       <section className="notification-group">
-        <h3>IN-APP NOTIFICATIONS</h3>
+        <h3>PUSH NOTIFICATIONS</h3>
         <Switch on={n.push} set={(v) => setN({ ...n, push: v })} title="Push Notifications" text="Show browser push notifications for urgent items." />
+      </section>
+      <section className="notification-group">
+        <h3>SUMMARY CADENCE</h3>
+        <label className="emergency-field">
+          <span>Digest frequency</span>
+          <select value={n.cadence} onChange={(e) => setN({ ...n, cadence: e.target.value })}>
+            {['Daily', 'Weekly', 'Never'].map((c) => <option key={c}>{c}</option>)}
+          </select>
+        </label>
       </section>
       <div className="notification-actions">
         <button type="submit" className="btn btn-solid">Save Preferences</button>

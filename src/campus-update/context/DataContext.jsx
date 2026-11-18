@@ -73,7 +73,7 @@ const toApi = (r, withType, institutionId, audienceOpts) => {
     targetUrl: r.targetUrl || null,
     // Contract §9: audiences needs at least one entry; ids come from the picked audience.
     audiences: institutionId
-      ? [{ institutionId, facultyId: opt.facultyId || null, departmentId: opt.departmentId || null, programmeId: opt.programmeId || null, academicLevelId: opt.academicLevelId || null }]
+      ? [{ institutionId, facultyId: opt.facultyId || null, departmentId: opt.departmentId || null, programmeId: opt.programmeId || null, academicLevelId: opt.academicLevelId || null, targetAudience: opt.target || (r.audience === 'Students' ? 'Students' : r.audience === 'Staff' ? 'Staff' : 'All') }]
       : [],
   };
   if (withType) body.type = r.type || 'News';
@@ -93,7 +93,7 @@ function useLocalCollection(key, seed) {
   );
 }
 
-const ROLE_LABEL = { LeadSchoolAdmin: 'Institution administrator', SchoolAdmin: 'Institution administrator', InstitutionAdmin: 'Institution administrator', Staff: 'Staff', SuperAdmin: 'Platform administrator' };
+const ROLE_LABEL = { LeadSchoolAdmin: 'Institution administrator', NewsAdmin: 'News administrator', CalendarAdmin: 'Calendar administrator', SchoolAdmin: 'Institution administrator', InstitutionAdmin: 'Institution administrator', Staff: 'Staff', SuperAdmin: 'Platform administrator' };
 
 export function DataProvider({ children }) {
   const [items, setItems] = useState([]);
@@ -138,6 +138,7 @@ export function DataProvider({ children }) {
           last: p.lastName || prev.last,
           email: p.email || prev.email,
           role: ROLE_LABEL[p.role] || prev.role,
+          institutionId: p.institutionId || prev.institutionId,
         }));
         acadRef.current = {
           institutionId: p.institutionId,

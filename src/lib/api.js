@@ -70,8 +70,12 @@ const qs = (base, params = {}) => {
 
 export const authApi = {
   login: (email, password) => api('/api/v1/auth/login', { method: 'POST', body: { email, password }, auth: false }),
+  forgotPassword: (email) => api('/api/v1/auth/forgot-password', { method: 'POST', body: { email }, auth: false }),
+  resetPassword: (b) => api('/api/v1/auth/reset-password', { method: 'POST', body: b, auth: false }),
   profile: () => api('/api/v1/auth/profile'),
   updateProfile: (b) => api('/api/v1/auth/profile', { method: 'PUT', body: b }),
+  notificationPreferences: () => api('/api/v1/auth/notification-preferences'),
+  saveNotificationPreferences: (b) => api('/api/v1/auth/notification-preferences', { method: 'PUT', body: b }),
   uploadPhoto: (body) => api('/api/v1/auth/profile/photo', { method: 'POST', body }),
   changePassword: (b) => api('/api/v1/auth/change-password', { method: 'POST', body: b }),
   sessions: () => api('/api/v1/auth/sessions'),
@@ -86,7 +90,8 @@ export const contentApi = {
   list: (params) => api(qs('/api/v1/content', params)),
   create: (b) => api('/api/v1/content/json', { method: 'POST', body: b }), // JSON route; /content is multipart-only now
   update: (id, b) => api(`/api/v1/content/${id}`, { method: 'PUT', body: b }),
-  setStatus: (id, status) => api(`/api/v1/content/${id}/status`, { method: 'PATCH', body: { status } }),
+  setStatus: (id, status, reason) => api(`/api/v1/content/${id}/status`, { method: 'PATCH', body: reason ? { status, reason } : { status } }),
+  pendingApproval: () => api('/api/v1/content/pending-approval'),
   remove: (id) => api(`/api/v1/content/${id}`, { method: 'DELETE' }),
 }
 
@@ -96,6 +101,8 @@ export const calendarApi = {
   create: (b) => api('/api/v1/calendar/json', { method: 'POST', body: b }), // JSON route; /calendar is multipart-only now
   media: (id, body) => api(`/api/v1/calendar/${id}/media`, { method: 'POST', body }),
   submit: (id) => api(`/api/v1/calendar/${id}/submit`, { method: 'POST' }),
+  publish: (id) => api(`/api/v1/calendar/${id}/publish`, { method: 'POST', body: {} }),
+  reject: (id, reason) => api(`/api/v1/calendar/${id}/reject`, { method: 'POST', body: { reason } }),
   unpublish: (id) => api(`/api/v1/calendar/${id}/unpublish`, { method: 'POST' }),
   update: (id, b) => api(`/api/v1/calendar/${id}`, { method: 'PUT', body: b }),
   upload: (body) => api('/api/v1/calendar/upload', { method: 'POST', body }),
@@ -127,4 +134,16 @@ export const institutionsApi = {
 export const statsApi = {
   registrationsByDepartment: () => api('/api/v1/institution/stats/registrations-by-department'),
   weeklyActiveStudents: () => api('/api/v1/institution/stats/weekly-active-students'),
+};
+
+// Contract §17: LeadSchoolAdmin/SuperAdmin publish emergency alerts (instant Urgent Announcement).
+export const emergencyApi = {
+  send: (b) => api('/api/v1/emergency-alerts', { method: 'POST', body: b }),
+};
+
+// Contract §17: LeadSchoolAdmin manages delegated admins inside their institution.
+export const adminsApi = {
+  list: (institutionId) => api(`/api/v1/admin/administrators?institutionId=${institutionId}`),
+  create: (b) => api('/api/v1/admin/administrators', { method: 'POST', body: b }),
+  update: (id, b) => api(`/api/v1/admin/administrators/${id}`, { method: 'PATCH', body: b }),
 };

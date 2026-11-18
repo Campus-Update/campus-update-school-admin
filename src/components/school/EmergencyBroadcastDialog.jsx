@@ -73,10 +73,6 @@ export default function EmergencyBroadcastDialog({ institutionName, onClose, onS
       setError('Enter an alert headline of at least 3 characters.')
       return
     }
-    if (!audience) {
-      setError('Select an audience for this alert.')
-      return
-    }
     if (message.trim().length < 10) {
       setError('Write an alert message of at least 10 characters.')
       return
@@ -90,10 +86,7 @@ export default function EmergencyBroadcastDialog({ institutionName, onClose, onS
     try {
       await onSend({
         title: title.trim(),
-        audience,
         message: message.trim(),
-        imageUrl: image?.src || null,
-        sentAt: new Date().toISOString(),
       })
       setStage('success')
     } catch (sendError) {
@@ -115,13 +108,6 @@ export default function EmergencyBroadcastDialog({ institutionName, onClose, onS
                 <span>Article Headline <b>*</b></span>
                 <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Enter alert headline" autoComplete="off" />
               </label>
-              <label className="emergency-field">
-                <span>Audience <b>*</b></span>
-                <select value={audience} onChange={(event) => setAudience(event.target.value)}>
-                  <option value="">Select audience</option>
-                  {AUDIENCES.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
-              </label>
               <div className="emergency-field">
                 <label htmlFor="emergency-message">Message <b>*</b></label>
                 <div className="emergency-message">
@@ -131,20 +117,6 @@ export default function EmergencyBroadcastDialog({ institutionName, onClose, onS
                   <textarea id="emergency-message" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Write full alert message..." rows={6} />
                 </div>
               </div>
-              <input className="sr-only" id="emergency-image" type="file" accept="image/jpeg,image/png" onChange={selectImage} />
-              {image ? (
-                <div className="emergency-image-preview">
-                  <img src={image.src} alt="" />
-                  <span>{image.name}</span>
-                  <button type="button" onClick={() => setImage(null)}>Remove image</button>
-                </div>
-              ) : (
-                <label className="emergency-upload" htmlFor="emergency-image">
-                  <span><Icon n="upload" s={18} /></span>
-                  <b>Upload your image here</b>
-                  <small>Supports JPG or PNG. Max file size 5MB.</small>
-                </label>
-              )}
               {error && <p className="emergency-error" role="alert">{error}</p>}
             </div>
             <div className="modal-f emergency-compose-actions">
@@ -159,7 +131,7 @@ export default function EmergencyBroadcastDialog({ institutionName, onClose, onS
           <div className="emergency-confirm-content">
             <span className="emergency-confirm-icon"><Icon n="warning" s={42} /></span>
             <h2>Are you sure you want to proceed?</h2>
-            <p>This emergency broadcast will be sent to {institutionName} for <b>{audience}</b>.</p>
+            <p>This emergency broadcast will be sent to {institutionName} for all active students and staff of <b>{institutionName}</b>.</p>
           </div>
           <div className="modal-f emergency-confirm-actions">
             <button type="button" className="btn btn-line" onClick={() => setStage('compose')}>Cancel</button>

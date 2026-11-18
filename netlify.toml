@@ -4,6 +4,6 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://campus-update-api-staging.vercel.app/api/:splat"
+  to = "https://campus-update-api-staging-182508374043.us-east1.run.app/api/:splat"
   status = 200
   force = true
