@@ -10,8 +10,9 @@ import CalendarPage from './campus-update/pages/Calendar.jsx'
 import UsersPage from './campus-update/pages/Users.jsx'
 import StatisticsPage from './campus-update/pages/Statistics.jsx'
 import SettingsPage from './campus-update/pages/Settings.jsx'
+import NotificationsPage from './campus-update/pages/Notifications.jsx'
 
-const PAGES = ['news', 'events', 'calendar', 'users', 'stats', 'settings']
+const PAGES = ['news', 'events', 'calendar', 'users', 'stats', 'settings', 'notifications']
 
 const PAGE_COMPONENTS = {
   news: NewsPage,
@@ -20,6 +21,7 @@ const PAGE_COMPONENTS = {
   users: UsersPage,
   stats: StatisticsPage,
   settings: SettingsPage,
+  notifications: NotificationsPage,
 }
 
 const TITLES = {
@@ -29,6 +31,7 @@ const TITLES = {
   users: ['User Management', 'Manage students, staff and admin accounts.'],
   stats: ['Statistics', 'Institution performance and reach.'],
   settings: ['Settings', 'Institution and account configuration.'],
+  notifications: ['Notifications', 'Updates and activity for your institution.'],
 }
 
 const fromHash = () => {

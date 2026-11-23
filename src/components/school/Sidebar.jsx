@@ -52,10 +52,11 @@ export default function Sidebar({ active = 'overview', onNavigate, open = false,
     <>
       {open && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={onClose} aria-hidden="true" />}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[280px] shrink-0 -translate-x-full flex-col bg-white px-4 py-6 transition-transform lg:static lg:z-auto lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-[280px] shrink-0 -translate-x-full flex-col overflow-hidden bg-white px-4 py-6 transition-transform lg:sticky lg:top-[27px] lg:h-[calc(100vh-54px)] lg:translate-x-0 ${
           open ? 'translate-x-0' : ''
         }`}
       >
+        <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex items-center gap-3 px-2">
           <LogoMark className="h-9 w-8" />
           <span className="text-xl font-bold tracking-[-0.3px] text-[#17171B]">Campus Update</span>
@@ -84,8 +85,9 @@ export default function Sidebar({ active = 'overview', onNavigate, open = false,
             <NavItem key={i.id} item={i} active={active === i.id} onNavigate={onNavigate} onClose={onClose} />
           ))}
         </nav>
+        </div>
 
-        <div className="mt-auto flex flex-col gap-1.5 pt-8">
+        <div className="flex shrink-0 flex-col gap-1.5 pt-4">
           <button
             type="button"
             onClick={() => onNavigate?.('settings')}

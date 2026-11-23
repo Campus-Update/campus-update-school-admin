@@ -9,10 +9,10 @@ export function contentSub(item) {
   return parts.join(' · ');
 }
 
-export default function ContentCell({ item }) {
+export default function ContentCell({ item, onClick }) {
   return (
     <>
-      <a className="cell-link" href="#/news">{item.title}</a>
+      <button type="button" className="cell-link" onClick={onClick}>{item.title}</button>
       <span className="cell-sub">{contentSub(item)}</span>
     </>
   );

@@ -10,6 +10,7 @@ import ContentCell, { openOf, reachOf } from '../components/ContentCell.jsx';
 import { ConfirmDialog } from '../components/Modal.jsx';
 import { useData } from '../context/DataContext.jsx';
 import { AUDIENCES, CONTENT_TYPES, STATUSES } from '../data/metrics.js';
+import { fmtDateTime } from '../lib/format.js';
 
 const ARTICLE_CATEGORIES = ['General', 'Campus', 'Weather', 'Archived'];
 const ARTICLE_PRIORITIES = ['Normal', 'Important', 'Urgent'];
@@ -298,6 +299,52 @@ function ArticleEditor({ item, onBack, onSave }) {
 }
 
 
+function NewsDetailsPage({ item, onBack, onEdit }) {
+  const date = item.publishedAt || item.updatedAt || item.createdAt;
+  const details = [
+    ['Type', item.type],
+    ['Category', item.articleCategory],
+    ['Priority', item.priority],
+    ['Audience', item.audience],
+    ['Published by', item.source],
+    ['Reach', reachOf(item)],
+    ['Opened', openOf(item)],
+  ];
+
+  return (
+    <article className="article-details">
+      <div className="article-details-toolbar">
+        <button type="button" className="article-back" onClick={onBack}>
+          <Icon n="left" s={16} w={1.8} /> Back to News
+        </button>
+        {item.status !== 'Live' && (
+          <button type="button" className="btn btn-line" onClick={onEdit}>
+            Edit article
+          </button>
+        )}
+      </div>
+      {item.imageUrl && <img className="article-details-image" src={item.imageUrl} alt="" />}
+      <div className="article-details-heading">
+        <div className="article-details-badges">
+          <TypePill type={item.type} priority={item.priority} />
+          <StatusPill status={item.status} />
+        </div>
+        <h2>{item.title}</h2>
+        <p>{item.source || 'Institution'}{date ? ` · ${fmtDateTime(date)}` : ''}</p>
+      </div>
+      {item.body && <div className="article-details-body">{item.body}</div>}
+      <dl className="article-details-fields">
+        {details.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value || '—'}</dd>
+          </div>
+        ))}
+      </dl>
+    </article>
+  );
+}
+
 export default function News() {
   const { content, toast, loadContent } = useData();
   const [q, setQ] = useState('');
@@ -306,6 +353,7 @@ export default function News() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [detail, setDetail] = useState(null);
   const [del, setDel] = useState(null);
   const [viewing, setViewing] = useState(null);
   const tools = useRef(null);
@@ -341,7 +389,7 @@ export default function News() {
   };
 
   const columns = [
-    { key: 'title', label: 'Content', sort: true, render: (r) => <ContentCell item={r} /> },
+    { key: 'title', label: 'Content', sort: true, render: (r) => <ContentCell item={r} onClick={() => setDetail(r)} /> },
     { key: 'type', label: 'Type', sort: true, render: (r) => <TypePill type={r.type} priority={r.priority} /> },
     { key: 'audience', label: 'Audience', sort: true },
     { key: 'reach', label: 'Reach', sort: true, render: reachOf },
@@ -378,9 +426,18 @@ export default function News() {
     );
   }
 
+  if (detail) {
+    return (
+      <NewsDetailsPage
+        item={detail}
+        onBack={() => setDetail(null)}
+        onEdit={() => { setEditing(detail); setDetail(null); }}
+      />
+    );
+  }
+
   return (
     <div>
-      <div className="note"><span><b>The list API returns published items only (contract §8).</b> Drafts and pending items are safe on the server but hidden here after a reload until backend includes own unpublished items in the list.</span></div>
       <div className="toolbar" style={{ alignItems: 'center' }}>
         <div className="left-tools" ref={tools}>
           <label className="search">

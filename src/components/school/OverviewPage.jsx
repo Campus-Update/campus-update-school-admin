@@ -167,7 +167,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
         <Sidebar active="overview" onNavigate={onNavigate} onLogout={onLogout} open={navOpen} onClose={() => setNavOpen(false)} />
 
         <main className="flex min-w-0 flex-1 flex-col gap-4 md:gap-6">
-          <Topbar title="Overview" subtitle="Manage operations, users, and system configuration." onMenu={() => setNavOpen(true)} />
+          <Topbar title="Overview" subtitle="Manage operations, users, and system configuration." onMenu={() => setNavOpen(true)} onNavigate={onNavigate} onLogout={onLogout} />
 
           {/* Greeting + emergency alert */}
           <div className="flex flex-col gap-4 md:gap-5">
@@ -209,7 +209,7 @@ export default function OverviewPage({ onNavigate, onLogout }) {
               </div>
               {hasActivity ? (
                 <div className="overflow-x-auto rounded-[10px] border border-[#EDEDF0]">
-                  <table className="w-full min-w-[760px] table-fixed border-collapse">
+                  <table className="w-full min-w-[900px] table-fixed border-collapse">
                     <thead>
                       <tr>
                         <TH sort className="w-[36%]">CONTENT</TH>
@@ -223,14 +223,14 @@ export default function OverviewPage({ onNavigate, onLogout }) {
                     <tbody>
                       {ACTIVITY.map((r, i) => (
                         <tr key={i} className={`border-t border-[#EDEDF0] ${i % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFB]'}`}>
-                          <td className="w-[38%] px-4 py-4">
-                            <button type="button" onClick={() => onNavigate?.('news')} className="block truncate text-left text-[15px] font-semibold leading-5 text-[#4F46E5] hover:underline">
+                          <td className="w-[38%] max-w-0 px-4 py-4">
+                            <button type="button" title={r.title} onClick={() => onNavigate?.('news')} className="block w-full truncate text-left text-[15px] font-semibold leading-5 text-[#4F46E5] hover:underline">
                               {r.title}
                             </button>
                             <span className="mt-1 block truncate text-[13px] leading-4 text-[#7B77F0]">{r.meta}</span>
                           </td>
                           <td className="w-[13%] px-4 py-4"><TypePill type={r.type} /></td>
-                          <td className="w-[21%] px-4 py-4 text-[13px] leading-4 text-[#3F3F46]">{r.audience}</td>
+                          <td className="w-[21%] max-w-0 truncate px-4 py-4 text-[13px] leading-4 text-[#3F3F46]" title={r.audience}>{r.audience}</td>
                           <td className="w-[9%] px-4 py-4 text-[13px] font-medium leading-4 text-[#17171B]">{r.reach}</td>
                           <td className="w-[9%] px-4 py-4 text-[13px] leading-4 text-[#3F3F46]">{r.opened}</td>
                           <td className="w-[10%] px-4 py-4">

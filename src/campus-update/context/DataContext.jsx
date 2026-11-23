@@ -312,16 +312,9 @@ export function DataProvider({ children }) {
         const submitting = r.status !== 'Draft';
         const publishedAt = new Date(`${r.date}T08:00:00Z`).toISOString();
         try {
-          let saved;
           // Contract update: schools create Draft then submit for approval (direct publish = 400).
-          saved = await calendarApi.create({ institutionId, title: r.title, academicSession: r.category || 'General', imageUrl: '', publishedAt, isOfficial: false, status: 'Draft' });
-          if (r.imageFile) {
-            const form = new FormData();
-            form.append('file', r.imageFile);
-            await calendarApi.media(saved.id, form).catch((e) => toast(`Calendar saved, but image upload failed: ${e.message}`));
-          }
+          let saved = await calendarApi.create({ institutionId, title: r.title, academicSession: r.category || 'General', imageUrl: '', publishedAt, isOfficial: false, status: 'Draft' });
           if (submitting) {
-            if (!r.imageFile) { toast('Add a calendar image before submitting it.'); await calendarApi.remove(saved.id).catch(() => {}); return false; }
             await calendarApi.submit(saved.id);
             saved = { ...saved, status: 'Submitted' };
           }
@@ -334,10 +327,6 @@ export function DataProvider({ children }) {
         if (!row) return false;
         const institutionId = acadRef.current.institutionId;
         const submitting = patch.status !== 'Draft';
-        if (row.status === 'Draft' && submitting && !row.imageUrl && !patch.imageFile) {
-          toast('Add a calendar image before submitting it.');
-          return false;
-        }
         const body = {
           institutionId,
           title: patch.title ?? row.title,
@@ -349,16 +338,10 @@ export function DataProvider({ children }) {
         };
         try {
           let saved = await calendarApi.update(id, body);
-          if (patch.imageFile) {
-            const form = new FormData();
-            form.append('file', patch.imageFile);
-            await calendarApi.media(id, form).catch((e) => toast(`Calendar saved, but image upload failed: ${e.message}`));
-          }
           if (row.status === 'Draft' && submitting) {
             await calendarApi.submit(id);
             saved = { ...saved, status: 'Submitted' };
           }
-          if (patch.imageFile && saved.id !== id) await calendarApi.remove(id);
           setCalendarRows((rows) => rows.map((x) => x.id === id ? calendarFromApi(saved) : x));
           return true;
         } catch (e) { toast(`Calendar save failed: ${e.message}`); return false; }
@@ -366,7 +349,6 @@ export function DataProvider({ children }) {
       submitRow: async (id) => {
         const row = calendarRows.find((x) => x.id === id);
         if (!row) return false;
-        if (!row.imageUrl) { toast('Add a calendar image before submitting it.'); return false; }
         try {
           await calendarApi.submit(id);
           setCalendarRows((rows) => rows.map((x) => (x.id === id ? { ...x, status: 'Pending' } : x)));

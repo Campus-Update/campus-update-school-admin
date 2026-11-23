@@ -653,17 +653,6 @@
 .source-page .schedule-format button:hover { background: #e6e5fa; }
 .source-page .schedule-body textarea { display: block; width: 100%; min-height: 128px; border: 0; resize: vertical; outline: 0; padding: 9px 10px; background: #fff; font-size: 12px; line-height: 1.5; }
 .source-page .schedule-body textarea::placeholder { color: #a1a1aa; }
-.source-page .schedule-upload { min-height: 176px; border: 1px dashed #cbd0d9; border-radius: 8px; overflow: hidden; background: #fafafa; }
-.source-page .schedule-upload-prompt { width: 100%; height: 100%; min-height: 176px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--ink-2); }
-.source-page .schedule-upload-prompt:hover { background: #f6f6ff; }
-.source-page .schedule-upload-icon { width: 68px; height: 46px; border: 1px solid var(--primary); border-radius: 999px; display: grid; place-items: center; color: var(--primary); }
-.source-page .schedule-upload-prompt b { font-size: 12px; font-weight: 600; }
-.source-page .schedule-upload-prompt small { color: #9ca3af; font-size: 10px; }
-.source-page .schedule-image-preview { height: 100%; min-height: 176px; position: relative; display: grid; place-items: center; }
-.source-page .schedule-image-preview img { width: 100%; height: 100%; min-height: 176px; position: absolute; inset: 0; object-fit: cover; }
-.source-page .schedule-image-preview span,
-.source-page .schedule-image-preview button { z-index: 1; padding: 5px 8px; border-radius: 5px; background: rgba(24, 24, 27, .78); color: #fff; font-size: 11px; }
-.source-page .schedule-image-preview button { position: absolute; right: 8px; top: 8px; }
 .source-page .schedule-error { color: #b42318; font-size: 12px; margin-top: 10px; }
 .source-page .schedule-actions { display: flex; align-items: center; gap: 14px; margin-top: 20px; }
 .source-page .schedule-actions .btn { min-height: 40px; font-size: 12px; }
@@ -683,4 +672,44 @@
   .source-page .article-field-full, .source-page .event-field-full, .source-page .schedule-field-full { grid-column: auto; }
   .source-page .article-actions, .source-page .event-actions, .source-page .schedule-actions { flex-wrap: wrap; }
   .source-page .article-actions .btn, .source-page .event-actions .btn, .source-page .schedule-actions .btn { flex: 1; }
+}
+
+.source-page .cell-link { max-width: 100%; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.source-page .article-details { width: 100%; max-width: 960px; margin: 0 auto; }
+.source-page .article-details-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.source-page .article-details-image { display: block; width: 100%; max-height: 420px; border-radius: 12px; object-fit: cover; background: #f1f4f8; }
+.source-page .article-details-heading { padding: 22px 0 16px; }
+.source-page .article-details-badges { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.source-page .article-details-heading h2 { margin-top: 14px; color: var(--ink); font-size: clamp(22px, 3vw, 32px); font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
+.source-page .article-details-heading > p { margin-top: 9px; color: var(--muted); font-size: 13px; }
+.source-page .article-details-body { padding: 18px 0 24px; border-top: 1px solid var(--line-soft); color: var(--ink-2); font-size: 15px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.source-page .article-details-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; border-top: 1px solid var(--line-soft); }
+.source-page .article-details-fields > div { display: flex; justify-content: space-between; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line-soft); }
+.source-page .article-details-fields dt { color: var(--muted); font-size: 13px; }
+.source-page .article-details-fields dd { color: var(--ink-2); font-size: 13px; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
+.source-page .notifications-page { max-width: 900px; }
+.source-page .notifications-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.source-page .notifications-heading h2 { font-size: 18px; font-weight: 600; }
+.source-page .notifications-heading p { margin-top: 5px; color: var(--muted); font-size: 13px; }
+.source-page .notifications-state, .source-page .notifications-error { padding: 18px 0; color: var(--muted); font-size: 13px; }
+.source-page .notifications-error { color: #b42318; }
+.source-page .notifications-list { list-style: none; border-top: 1px solid var(--line-soft); }
+.source-page .notifications-item { display: flex; align-items: flex-start; gap: 14px; padding: 18px 4px; border-bottom: 1px solid var(--line-soft); }
+.source-page .notifications-dot { width: 9px; height: 9px; flex: none; margin-top: 6px; border-radius: 50%; background: #d4d4d8; }
+.source-page .notifications-dot.unread { background: var(--primary); }
+.source-page .notifications-copy { min-width: 0; flex: 1; }
+.source-page .notifications-item-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.source-page .notifications-item-heading h3 { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.source-page .notifications-unread { border-radius: 999px; padding: 3px 8px; background: #eeedfd; color: var(--primary-ink); font-size: 11px; }
+.source-page .notifications-copy p { margin-top: 5px; color: #52525b; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+.source-page .notifications-copy time { display: block; margin-top: 7px; color: #85888f; font-size: 11px; }
+.source-page .notifications-mark-read { flex: none; color: var(--primary-ink); font-size: 12px; }
+.source-page .notifications-mark-read:disabled { opacity: .6; }
+
+@media (max-width: 560px) {
+  .source-page .article-details-fields { grid-template-columns: 1fr; }
+  .source-page .article-details-fields > div { padding: 11px 0; }
+  .source-page .notifications-item { flex-wrap: wrap; gap: 10px; }
+  .source-page .notifications-copy { flex-basis: calc(100% - 24px); }
+  .source-page .notifications-mark-read { margin-left: 19px; }
 }

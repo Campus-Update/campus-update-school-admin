@@ -99,14 +99,11 @@ export const calendarApi = {
   list: () => api('/api/v1/calendar'),
   manage: (institutionId) => api(qs('/api/v1/calendar/manage', { institutionId })),
   create: (b) => api('/api/v1/calendar/json', { method: 'POST', body: b }), // JSON route; /calendar is multipart-only now
-  media: (id, body) => api(`/api/v1/calendar/${id}/media`, { method: 'POST', body }),
   submit: (id) => api(`/api/v1/calendar/${id}/submit`, { method: 'POST' }),
   publish: (id) => api(`/api/v1/calendar/${id}/publish`, { method: 'POST', body: {} }),
   reject: (id, reason) => api(`/api/v1/calendar/${id}/reject`, { method: 'POST', body: { reason } }),
   unpublish: (id) => api(`/api/v1/calendar/${id}/unpublish`, { method: 'POST' }),
   update: (id, b) => api(`/api/v1/calendar/${id}`, { method: 'PUT', body: b }),
-  upload: (body) => api('/api/v1/calendar/upload', { method: 'POST', body }),
-  publish: (id) => api(`/api/v1/calendar/${id}/publish`, { method: 'POST' }),
   remove: (id) => api(`/api/v1/calendar/${id}`, { method: 'DELETE' }),
 }
 
