@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Icon } from '../components/Icons.jsx';
 import DataTable from '../components/DataTable.jsx';
-import { calendarApi } from '../../lib/api.js';
 import RowMenu from '../components/RowMenu.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import ItemDetailsDialog from '../components/ItemDetailsDialog.jsx';
@@ -180,52 +179,12 @@ function ScheduleEditor({ item, onBack, onSave }) {
       {error && <p className="schedule-error" role="alert">{error}</p>}
       <div className="schedule-actions">
         <button type="submit" name="action" value="draft" className="btn btn-line" disabled={saving}>{editing ? 'Save Changes' : 'Save Draft'} <Icon n="save" s={15} /></button>
-        <button type="submit" name="action" value="approval" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : editing ? 'Save & Publish Calendar' : 'Review & Publish Calendar'} <Icon n="send" s={16} /></button>
+        <button type="submit" name="action" value="approval" className="btn btn-primary" disabled={saving}>{saving ? 'Submitting...' : editing ? 'Save & Submit for Review' : 'Submit for Approval'} <Icon n="send" s={16} /></button>
       </div>
     </form>
   );
 }
 
-
-function CalendarApprovals() {
-  const { toast } = useData();
-  const [rows, setRows] = useState(null);
-  const [rejectFor, setRejectFor] = useState(null);
-  const [reason, setReason] = useState('');
-  const load = () => calendarApi.manage().then((r) => setRows((Array.isArray(r) ? r : r?.items || []).filter((c) => c.status === 'PendingApproval'))).catch(() => setRows([]));
-  useEffect(() => { load(); }, []);
-  const decide = async (id, ok, why) => {
-    try {
-      if (ok) await calendarApi.publish(id); else await calendarApi.reject(id, why);
-      toast(ok ? 'Calendar published to the campus.' : 'Calendar rejected.');
-      setRejectFor(null); setReason(''); load();
-    } catch (e) { toast(`Action failed: ${e.message}`); }
-  };
-  if (!rows || rows.length === 0) return null;
-  return (
-    <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4">
-      <b className="text-sm">Calendars waiting for your decision ({rows.length})</b>
-      <p className="mb-3 text-xs text-[#6B7280]">Contract §17: drafts submitted by calendar admins need your publish or reject (with reason).</p>
-      {rows.map((c) => (
-        <div key={c.id} className="mb-2 rounded-lg border border-amber-200 bg-white p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div><b className="text-sm">{c.title}</b> <span className="ml-2 text-xs text-[#6B7280]">{c.academicSession}</span></div>
-            <div className="flex gap-2">
-              <button type="button" className="btn btn-solid" onClick={() => decide(c.id, true)}>Publish</button>
-              <button type="button" className="btn btn-line" onClick={() => { setRejectFor(rejectFor === c.id ? null : c.id); setReason(''); }}>Reject</button>
-            </div>
-          </div>
-          {rejectFor === c.id && (
-            <div className="mt-2 flex gap-2">
-              <input className="h-9 flex-1 rounded-lg border border-[#D1D5DC] px-3 text-sm" placeholder="Reason (required)" value={reason} onChange={(e) => setReason(e.target.value)} />
-              <button type="button" className="btn btn-danger" disabled={reason.trim().length < 3} onClick={() => decide(c.id, false, reason.trim())}>Confirm reject</button>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 export default function Calendar() {
   const { calendar, institution, toast } = useData();
@@ -270,7 +229,7 @@ export default function Calendar() {
           const saved = editing
             ? await calendar.update(editing.id, data)
             : await calendar.add(data);
-          if (saved !== false) toast(data.status === 'Draft' ? 'Draft saved' : editing ? 'Changes saved' : 'Schedule published');
+          if (saved !== false) toast(data.status === 'Draft' ? (editing ? 'Changes saved' : 'Draft saved') : 'Submitted for approval');
           return saved;
         }}
       />
@@ -284,7 +243,6 @@ export default function Calendar() {
         {calendar.error && <div className="note"><span><b>Could not load calendars from the staging API.</b> Refresh the page or try again shortly.</span></div>}
         {add}
       </div>
-      <CalendarApprovals />
       <DataTable caption="Academic calendar" columns={columns} rows={rows} empty={<EmptyState title="No dates yet" text="Add the first date for this academic session." action={add} />} />
       {del && <ConfirmDialog title="Delete this draft?" text={`“${del.title}” will be permanently removed.`} confirmLabel="Delete" danger onConfirm={async () => { if (await calendar.remove(del.id)) toast('Draft deleted'); setDel(null); }} onClose={() => setDel(null)} />}
       {viewing && <ItemDetailsDialog item={viewing} fields={[

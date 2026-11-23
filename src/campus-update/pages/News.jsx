@@ -290,53 +290,13 @@ function ArticleEditor({ item, onBack, onSave }) {
           {editing ? 'Save Changes' : 'Save Draft'} <Icon n="save" s={15} />
         </button>
         <button type="submit" name="action" value="approval" className="btn btn-primary" disabled={saving}>
-          {saving ? 'Saving...' : editing ? 'Save & Submit for Review' : 'Review & Publish News'} <Icon n="send" s={16} />
+          {saving ? 'Submitting...' : editing ? 'Save & Submit for Review' : 'Submit for Approval'} <Icon n="send" s={16} />
         </button>
       </div>
     </form>
   );
 }
 
-
-function ApprovalsQueue() {
-  const { toast } = useData();
-  const [rows, setRows] = useState(null);
-  const [rejectFor, setRejectFor] = useState(null);
-  const [reason, setReason] = useState('');
-  const load = () => contentApi.pendingApproval().then((r) => setRows(Array.isArray(r) ? r : r?.items || [])).catch(() => setRows([]));
-  useEffect(() => { load(); }, []);
-  const decide = async (id, status, why) => {
-    try {
-      await contentApi.setStatus(id, status, why);
-      toast(status === 'Published' ? 'Approved — published to the campus.' : 'Rejected.');
-      setRejectFor(null); setReason(''); load();
-    } catch (e) { toast(`Action failed: ${e.message}`); }
-  };
-  if (!rows || rows.length === 0) return null;
-  return (
-    <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4">
-      <b className="text-sm">Waiting for your approval ({rows.length})</b>
-      <p className="mb-3 text-xs text-[#6B7280]">Contract §17: as institution administrator you approve or reject your school’s pending news before it publishes.</p>
-      {rows.map((r) => (
-        <div key={r.id} className="mb-2 rounded-lg border border-amber-200 bg-white p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div><b className="text-sm">{r.title}</b> <span className="ml-2 text-xs text-[#6B7280]">{r.type} · {r.sourceName || r.source || 'draft'}</span></div>
-            <div className="flex gap-2">
-              <button type="button" className="btn btn-solid" onClick={() => decide(r.id, 'Published')}>Approve</button>
-              <button type="button" className="btn btn-line" onClick={() => { setRejectFor(rejectFor === r.id ? null : r.id); setReason(''); }}>Reject</button>
-            </div>
-          </div>
-          {rejectFor === r.id && (
-            <div className="mt-2 flex gap-2">
-              <input className="h-9 flex-1 rounded-lg border border-[#D1D5DC] px-3 text-sm" placeholder="Reason (shared with the author)" value={reason} onChange={(e) => setReason(e.target.value)} />
-              <button type="button" className="btn btn-danger" disabled={reason.trim().length < 3} onClick={() => decide(r.id, 'Rejected', reason.trim())}>Confirm reject</button>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 export default function News() {
   const { content, toast, loadContent } = useData();
@@ -393,7 +353,7 @@ export default function News() {
         <RowMenu label={r.title} items={[
           { label: 'View Details', icon: 'eye', dividerAfter: true, run: () => setViewing(r) },
           ...(r.status === 'Live' ? [] : [{ label: 'Edit', icon: 'edit', run: () => setEditing(r) }]), // contract §9: Published is read-only
-          ...(r.status === 'Draft' ? [{ label: 'Publish', icon: 'send', run: () => submitForApproval(r) }] : []),
+          ...(r.status === 'Draft' ? [{ label: 'Submit for approval', icon: 'send', run: () => submitForApproval(r) }] : []),
           { label: 'Delete', icon: 'trash', run: () => setDel(r) },
         ]} />
       ),
@@ -420,7 +380,6 @@ export default function News() {
 
   return (
     <div>
-      <ApprovalsQueue />
       <div className="note"><span><b>The list API returns published items only (contract §8).</b> Drafts and pending items are safe on the server but hidden here after a reload until backend includes own unpublished items in the list.</span></div>
       <div className="toolbar" style={{ alignItems: 'center' }}>
         <div className="left-tools" ref={tools}>

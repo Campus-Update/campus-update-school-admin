@@ -10,7 +10,7 @@ import { authApi, calendarApi, contentApi, departmentsApi, mediaApi, schoolsApi 
 const Ctx = createContext(null);
 export const useData = () => useContext(Ctx);
 
-const STATUS_TO_API = { Live: 'Published', Draft: 'Draft', Scheduled: 'Draft', Pending: 'PendingApproval', Rejected: 'Rejected' };
+const STATUS_TO_API = { Live: 'PendingApproval', Draft: 'Draft', Scheduled: 'Draft', Pending: 'PendingApproval', Rejected: 'Rejected' };
 // Contract §4: Published→Live, PendingApproval→Pending; Archived rows are hidden (delete = archive).
 const STATUS_FROM_API = (s) => (s === 'Published' ? 'Live' : s === 'PendingApproval' ? 'Pending' : s);
 const calendarFromApi = (c) => ({
@@ -309,7 +309,7 @@ export function DataProvider({ children }) {
       add: async (r) => {
         const institutionId = acadRef.current.institutionId;
         if (!institutionId) { toast('Your account is not linked to an institution.'); return false; }
-        const status = r.status === 'Draft' ? 'Draft' : 'Published';
+        const submitting = r.status !== 'Draft';
         const publishedAt = new Date(`${r.date}T08:00:00Z`).toISOString();
         try {
           let saved;
@@ -320,11 +320,10 @@ export function DataProvider({ children }) {
             form.append('file', r.imageFile);
             await calendarApi.media(saved.id, form).catch((e) => toast(`Calendar saved, but image upload failed: ${e.message}`));
           }
-          if (status === 'Published') {
+          if (submitting) {
             if (!r.imageFile) { toast('Add a calendar image before submitting it.'); await calendarApi.remove(saved.id).catch(() => {}); return false; }
             await calendarApi.submit(saved.id);
             saved = { ...saved, status: 'Submitted' };
-            toast('Calendar submitted for approval.');
           }
           setCalendarRows((rows) => [calendarFromApi(saved), ...rows]);
           return true;
@@ -334,32 +333,30 @@ export function DataProvider({ children }) {
         const row = calendarRows.find((x) => x.id === id);
         if (!row) return false;
         const institutionId = acadRef.current.institutionId;
-        const status = patch.status === 'Draft' ? 'Draft' : 'Published';
+        const submitting = patch.status !== 'Draft';
+        if (row.status === 'Draft' && submitting && !row.imageUrl && !patch.imageFile) {
+          toast('Add a calendar image before submitting it.');
+          return false;
+        }
         const body = {
           institutionId,
           title: patch.title ?? row.title,
           academicSession: (patch.category ?? row.category) || 'General',
           imageUrl: row.imageUrl || '',
           publishedAt: new Date(`${patch.date ?? row.date}T08:00:00Z`).toISOString(),
-          isOfficial: status === 'Published',
-          status,
+          isOfficial: false,
+          status: 'Draft',
         };
         try {
-          let saved;
+          let saved = await calendarApi.update(id, body);
           if (patch.imageFile) {
-            saved = await calendarApi.update(id, body);
             const form = new FormData();
             form.append('file', patch.imageFile);
             await calendarApi.media(id, form).catch((e) => toast(`Calendar saved, but image upload failed: ${e.message}`));
-            if (row.status === 'Draft' && status === 'Published') saved = await calendarApi.publish(id);
-          } else if (row.status === 'Draft' && status === 'Published') {
-            if (!patch.imageFile && !row.imageUrl) { toast('Add a calendar image before submitting it.'); return false; }
-            saved = await calendarApi.update(id, { ...body, status: 'Draft' });
+          }
+          if (row.status === 'Draft' && submitting) {
             await calendarApi.submit(id);
             saved = { ...saved, status: 'Submitted' };
-            toast('Calendar submitted for approval.');
-          } else {
-            saved = await calendarApi.update(id, body);
           }
           if (patch.imageFile && saved.id !== id) await calendarApi.remove(id);
           setCalendarRows((rows) => rows.map((x) => x.id === id ? calendarFromApi(saved) : x));
